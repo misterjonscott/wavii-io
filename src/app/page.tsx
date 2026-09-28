@@ -5,15 +5,15 @@ import {
   Map as MapIcon,
   List as ListIcon,
   Search,
-  RotateCcw,
   Plus,
   Radio,
 } from 'lucide-react';
-import { useWaviiStore } from '@/store/useWaviiStore';
+import { useWaviiStore, NavTab } from '@/store/useWaviiStore';
 import { EventTaxonomy } from '@/types/wavii';
 import { EventDataTable } from '@/components/wavii/EventDataTable';
 import { EventMapView } from '@/components/wavii/EventMapView';
 import { WeatherDensityMatrix } from '@/components/wavii/WeatherDensityMatrix';
+import { TokenizedFilterBar } from '@/components/wavii/TokenizedFilterBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -49,21 +49,24 @@ const CATEGORIES: { id: EventTaxonomy; label: string; image: string }[] = [
 
 export default function WaviiDashboard() {
   const {
+    activeNavTab,
+    savedEventIds,
+    isFilterMenuOpen,
     viewMode,
     searchQuery,
     maxPrice,
     distanceMiles,
     selectedCategory,
-    selectedDay,
     weatherSource,
     eventSource,
+    setActiveNavTab,
+    setIsFilterMenuOpen,
     setViewMode,
     setSearchQuery,
     setMaxPrice,
     setDistanceMiles,
     setSelectedCategory,
     toggleCategoryShortcut,
-    resetFilters,
     hydrateLiveData,
   } = useWaviiStore();
 
@@ -71,16 +74,15 @@ export default function WaviiDashboard() {
     hydrateLiveData();
   }, [hydrateLiveData]);
 
-  const hasActiveFilters =
-    searchQuery !== '' ||
-    maxPrice !== '' ||
-    distanceMiles !== 25 ||
-    selectedCategory !== 'all' ||
-    selectedDay !== null;
+  const navItems: { id: NavTab; label: string; badge?: number }[] = [
+    { id: 'explore', label: 'Explore' },
+    { id: 'trending', label: 'Trending' },
+    { id: 'saved', label: 'Saved', badge: savedEventIds.length },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 px-6 py-5 font-sans">
-      <div className="max-w-7xl mx-auto space-y-5">
+      <div className="max-w-7xl mx-auto space-y-4">
         {/* Top Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -93,51 +95,82 @@ export default function WaviiDashboard() {
             <div className="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-full text-[11px] text-slate-300 font-mono">
               <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
               <span>
-                Weather: <strong className="text-emerald-400 uppercase">{weatherSource}</strong>
+                Weather:{' '}
+                <strong className="text-emerald-400 uppercase">
+                  {weatherSource}
+                </strong>
               </span>
               <span className="text-slate-600">•</span>
               <span>
-                Events: <strong className="text-purple-400 uppercase">{eventSource}</strong>
+                Events:{' '}
+                <strong
+                  className={`uppercase ${
+                    eventSource === 'live'
+                      ? 'text-emerald-400'
+                      : 'text-purple-400'
+                  }`}
+                >
+                  {eventSource}
+                </strong>
               </span>
             </div>
           </div>
 
-          <nav className="flex items-center bg-slate-100 border border-slate-300 rounded-md p-0.5 space-x-0.5">
-            {['Explore', 'Trending', 'Saved', 'Profile'].map((item) => (
-              <button
-                key={item}
-                className="px-2.5 py-1 text-xs font-semibold text-slate-900 hover:bg-slate-200 rounded transition-colors"
-              >
-                {item}
-              </button>
-            ))}
+          <nav className="flex items-center bg-slate-900 border border-slate-800 rounded-md p-1 space-x-1">
+            {navItems.map((item) => {
+              const isActive = activeNavTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveNavTab(item.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {item.badge !== undefined && (
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                        isActive
+                          ? 'bg-purple-900 text-purple-100'
+                          : 'bg-slate-800 text-slate-300'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </nav>
         </header>
 
         {/* Unified Command Bar */}
         <section className="flex flex-wrap items-center gap-3">
-          {hasActiveFilters ? (
-            <Button
-              variant="outline"
-              onClick={resetFilters}
-              className="bg-purple-950/50 border-purple-500/50 text-purple-200 hover:bg-purple-900/60 hover:text-white h-9 text-xs"
-            >
-              Reset filters <RotateCcw className="ml-1.5 h-3.5 w-3.5" />
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              className="bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800 hover:text-white h-9 text-xs"
-            >
-              Add filters <Plus className="ml-1.5 h-3.5 w-3.5" />
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+            className={`h-9 text-xs transition-colors cursor-pointer ${
+              isFilterMenuOpen
+                ? 'bg-purple-950/60 border-purple-500 text-purple-100'
+                : 'bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            Add filters{' '}
+            <Plus
+              className={`ml-1.5 h-3.5 w-3.5 transition-transform ${
+                isFilterMenuOpen ? 'rotate-45 text-purple-400' : ''
+              }`}
+            />
+          </Button>
 
           {/* Segmented Map / List Control */}
           <div className="flex items-center bg-slate-900 p-1 rounded-md border border-slate-800 h-9">
             <button
               onClick={() => setViewMode('map')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
                 viewMode === 'map'
                   ? 'bg-slate-700 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
@@ -147,7 +180,7 @@ export default function WaviiDashboard() {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
                 viewMode === 'list'
                   ? 'bg-slate-700 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
@@ -158,26 +191,34 @@ export default function WaviiDashboard() {
           </div>
 
           {/* Search Input */}
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <Input
               placeholder="Enter location, venue, or artist..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 bg-slate-900 border-slate-800 text-slate-100 text-xs placeholder:text-slate-400 focus-visible:ring-purple-500"
+              className="pl-8 h-9 bg-slate-900 border-slate-800 text-slate-100 !text-xs placeholder:text-xs placeholder:text-slate-400 focus-visible:ring-purple-500"
             />
           </div>
 
-          {/* Max Price */}
+          {/* Max Price with Embedded '$' Prefix & Clean 'Any' Placeholder */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300 font-medium">Max Price</span>
-            <Input
-              type="number"
-              placeholder="How much?"
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-              className="w-28 h-9 bg-slate-900 border-slate-800 text-slate-100 text-xs placeholder:text-slate-400 focus-visible:ring-purple-500"
-            />
+            <span className="text-xs text-slate-300 font-medium whitespace-nowrap">
+              Max Price
+            </span>
+            <div className="relative w-24">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400 pointer-events-none">
+                $
+              </span>
+              <Input
+                type="number"
+                min="0"
+                placeholder="Any"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="pl-6 pr-2.5 h-9 bg-slate-900 border-slate-800 text-slate-100 font-mono !text-xs placeholder:font-sans placeholder:text-xs placeholder:text-slate-500 focus-visible:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+            </div>
           </div>
 
           {/* Distance Select */}
@@ -187,7 +228,7 @@ export default function WaviiDashboard() {
               value={String(distanceMiles)}
               onValueChange={(val) => setDistanceMiles(Number(val))}
             >
-              <SelectTrigger className="w-28 h-9 bg-slate-900 border-slate-800 text-slate-200 text-xs">
+              <SelectTrigger className="w-28 h-9 bg-slate-900 border-slate-800 text-slate-200 !text-xs">
                 <SelectValue placeholder="Distance" />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -208,7 +249,7 @@ export default function WaviiDashboard() {
                 setSelectedCategory(val as 'all' | EventTaxonomy)
               }
             >
-              <SelectTrigger className="w-28 h-9 bg-slate-900 border-slate-800 text-slate-200 text-xs">
+              <SelectTrigger className="w-28 h-9 bg-slate-900 border-slate-800 text-slate-200 !text-xs">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -222,7 +263,10 @@ export default function WaviiDashboard() {
           </div>
         </section>
 
-        {/* Main Viewport: List View vs Map + Hot Three / Detail Drawer */}
+        {/* Tokenized Filter Builder & Active Token Pill Bar */}
+        <TokenizedFilterBar />
+
+        {/* Main Viewport: Fixed-Height List View vs Real WebGL Map + Sliding Drawer */}
         <section className="rounded-xl border border-slate-800 bg-slate-900/70 overflow-hidden shadow-2xl">
           {viewMode === 'list' ? <EventDataTable /> : <EventMapView />}
         </section>
@@ -235,7 +279,7 @@ export default function WaviiDashboard() {
               <button
                 key={cat.id}
                 onClick={() => toggleCategoryShortcut(cat.id)}
-                className={`group relative h-36 rounded-xl overflow-hidden border transition-all ${
+                className={`group relative h-36 rounded-xl overflow-hidden border transition-all cursor-pointer ${
                   isActive
                     ? 'border-purple-500 ring-2 ring-purple-500/40'
                     : 'border-slate-700 hover:border-slate-500'

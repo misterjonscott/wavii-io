@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import Map, { Marker, MapRef } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import {
   Navigation,
   CalendarPlus,
@@ -32,15 +34,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-// Geographic bounding box for Greater Indianapolis / Central Indiana
-const MAP_BOUNDS = {
-  minLat: 39.70,
-  maxLat: 40.06,
-  minLon: -86.42,
-  maxLon: -85.88,
+const INDY_DEFAULT_VIEW = {
+  longitude: -86.1581,
+  latitude: 39.82,
+  zoom: 9.8,
 };
 
 export function EventMapView() {
+  const mapRef = useRef<MapRef | null>(null);
   const {
     events,
     weatherDensity,
@@ -50,16 +51,15 @@ export function EventMapView() {
   } = useWaviiStore();
 
   const filteredEvents = useFilteredEvents();
-  const [zoomLevel, setZoomLevel] = useState<number>(1);
-  const [drawerMode, setDrawerMode] = useState<'hot-three' | 'detail'>('hot-three');
+  const [drawerMode, setDrawerMode] = useState<'hot-three' | 'detail'>(
+    'hot-three'
+  );
 
   const activeEvent =
     events.find((e) => e.id === selectedEventId) ||
     filteredEvents[0] ||
     events[0];
 
-  // Build the 3-card list: start with top 3, but if the user selected a map pin
-  // outside the top 3, swap it into the 3rd slot so it's always visible & highlighted
   const baseTopThree =
     filteredEvents.length >= 3
       ? filteredEvents.slice(0, 3)
@@ -71,48 +71,34 @@ export function EventMapView() {
       ? baseTopThree
       : [...baseTopThree.slice(0, 2), activeEvent];
 
-  // Handle clicking a pill marker on the map
+  // Smoothly fly the WebGL camera whenever the active event changes
+  useEffect(() => {
+    if (activeEvent && mapRef.current) {
+      mapRef.current.flyTo({
+        center: [activeEvent.lon, activeEvent.lat],
+        zoom: Math.max(mapRef.current.getZoom(), 11.2),
+        duration: 900,
+        essential: true,
+      });
+    }
+  }, [activeEvent]);
+
   const handleMarkerClick = (event: WaviiEvent) => {
     const wasAlreadySelected = event.id === activeEvent?.id;
     const isOneOfBaseTopThree = baseTopThree.some((e) => e.id === event.id);
 
     setSelectedEventId(event.id);
 
-    // If clicking a pin outside the initial Hot Three, or clicking an already-selected
-    // Hot Three pin a second time, smoothly glide open the Detail Drawer
     if (!isOneOfBaseTopThree || wasAlreadySelected) {
       setDrawerMode('detail');
     }
   };
 
-  // Match the active event's day of week with our 7-day Weather matrix
   const activeDayPrefix = activeEvent?.formattedDate.slice(0, 3).toLowerCase();
   const matchedWeather =
     weatherDensity.find(
       (d) => d.shortDay.toLowerCase() === activeDayPrefix
     ) || weatherDensity[0];
-
-  // Project lat/lon to percentage X/Y coordinates inside the map viewport,
-  // adding a slight deterministic offset for venues that share coordinates
-  const projectCoordinates = (event: WaviiEvent, index: number) => {
-    const xPercent =
-      ((event.lon - MAP_BOUNDS.minLon) /
-        (MAP_BOUNDS.maxLon - MAP_BOUNDS.minLon)) *
-      100;
-    const yPercent =
-      ((MAP_BOUNDS.maxLat - event.lat) /
-        (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat)) *
-      100;
-
-    // Slight stagger so events at the same arena (e.g. Gainbridge) don't stack 100% on top of each other
-    const staggerX = (index % 2 === 0 ? 1 : -1) * (index > 2 ? 2.2 : 0);
-    const staggerY = index > 2 ? (index % 3) * 2.5 - 2 : 0;
-
-    return {
-      x: Math.min(Math.max(xPercent + staggerX, 12), 88),
-      y: Math.min(Math.max(yPercent + staggerY, 14), 86),
-    };
-  };
 
   const renderWeatherIcon = (code: string) => {
     switch (code) {
@@ -129,149 +115,65 @@ export function EventMapView() {
 
   return (
     <TooltipProvider delayDuration={120}>
-      <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[440px]">
-        {/* Left 7 Columns: Interactive Cyber-Teal Spatial Map */}
-        <div className="lg:col-span-7 relative bg-slate-950 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800 select-none min-h-[380px]">
-          {/* Scalable Map Canvas */}
-          <div
-            style={{ transform: `scale(${zoomLevel})` }}
-            className="absolute inset-0 transition-transform duration-300 ease-out origin-center"
+      <div className="grid grid-cols-1 lg:grid-cols-12 h-[440px]">
+        {/* Left 7 Columns: Real 60fps WebGL Dark-Mode Street Map */}
+        <div className="lg:col-span-7 relative bg-slate-950 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800 h-full">
+          <Map
+            ref={mapRef}
+            initialViewState={INDY_DEFAULT_VIEW}
+            mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+            style={{ width: '100%', height: '100%' }}
+            attributionControl={false}
           >
-            {/* Dark Cyber-Teal Vector Street Grid SVG */}
-            <svg
-              className="w-full h-full opacity-45"
-              viewBox="0 0 800 500"
-              preserveAspectRatio="xMidYMid slice"
-            >
-              <defs>
-                <pattern
-                  id="minorGrid"
-                  width="40"
-                  height="40"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <path
-                    d="M 40 0 L 0 0 0 40"
-                    fill="none"
-                    stroke="#0f766e"
-                    strokeWidth="0.7"
-                    strokeOpacity="0.45"
-                  />
-                </pattern>
-                <pattern
-                  id="majorGrid"
-                  width="160"
-                  height="160"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <rect width="160" height="160" fill="url(#minorGrid)" />
-                  <path
-                    d="M 160 0 L 0 0 0 160"
-                    fill="none"
-                    stroke="#14b8a6"
-                    strokeWidth="1.4"
-                    strokeOpacity="0.55"
-                  />
-                </pattern>
-              </defs>
-
-              <rect width="800" height="500" fill="url(#majorGrid)" />
-
-              {/* Stylized I-465 Beltway & White River Arterials */}
-              <ellipse
-                cx="410"
-                cy="270"
-                rx="230"
-                ry="155"
-                fill="none"
-                stroke="#0d9488"
-                strokeWidth="2.5"
-                strokeOpacity="0.5"
-                strokeDasharray="8 4"
-              />
-              <path
-                d="M 120 40 Q 290 170 410 270 T 720 470"
-                fill="none"
-                stroke="#2dd4bf"
-                strokeWidth="2.5"
-                strokeOpacity="0.65"
-              />
-              <path
-                d="M 410 270 Q 520 180 680 65"
-                fill="none"
-                stroke="#14b8a6"
-                strokeWidth="2.2"
-                strokeOpacity="0.6"
-              />
-              <path
-                d="M 540 20 C 470 110, 440 190, 395 275 C 355 350, 310 420, 260 490"
-                fill="none"
-                stroke="#0284c7"
-                strokeWidth="6"
-                strokeOpacity="0.35"
-              />
-            </svg>
-
-            {/* Subtle Regional District Labels */}
-            <span className="absolute top-[16%] left-[18%] text-[10px] font-semibold tracking-widest uppercase text-teal-500/60 pointer-events-none">
-              Whitestown / Boone Co.
-            </span>
-            <span className="absolute top-[14%] right-[14%] text-[10px] font-semibold tracking-widest uppercase text-teal-500/60 pointer-events-none">
-              Noblesville / Ruoff
-            </span>
-            <span className="absolute top-[34%] right-[22%] text-[10px] font-semibold tracking-widest uppercase text-teal-500/60 pointer-events-none">
-              Fishers District
-            </span>
-            <span className="absolute top-[42%] left-[44%] text-[10px] font-semibold tracking-widest uppercase text-teal-500/60 pointer-events-none">
-              Broad Ripple
-            </span>
-            <span className="absolute top-[55%] left-[42%] text-lg font-bold tracking-wide text-slate-100/90 drop-shadow pointer-events-none">
-              Indianapolis
-            </span>
-            <span className="absolute bottom-[18%] left-[30%] text-[10px] font-semibold tracking-widest uppercase text-teal-500/60 pointer-events-none">
-              White River State Park
-            </span>
-
-            {/* Interactive Event Pill Markers */}
             {filteredEvents.map((event, index) => {
-              const pos = projectCoordinates(event, index);
               const isSelected = event.id === activeEvent?.id;
+              // Slight coordinate jitter when multiple events share the exact same arena
+              const jitterLon =
+                event.lon + (index % 2 === 0 ? 1 : -1) * (index * 0.0012);
+              const jitterLat =
+                event.lat + (index % 3 === 0 ? 1 : -1) * (index * 0.0009);
 
               return (
-                <button
+                <Marker
                   key={event.id}
-                  onClick={() => handleMarkerClick(event)}
-                  style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-                  className={`group absolute -translate-x-1/2 -translate-y-full transition-all duration-300 cursor-pointer ${
-                    isSelected
-                      ? 'z-30 scale-110'
-                      : 'z-10 hover:z-20 hover:scale-105'
-                  }`}
+                  longitude={jitterLon}
+                  latitude={jitterLat}
+                  anchor="bottom"
+                  style={{ zIndex: isSelected ? 40 : 10 }}
                 >
-                  <div
-                    className={`px-2.5 py-1 rounded text-xs font-mono font-medium whitespace-nowrap transition-all duration-200 shadow-lg ${
-                      isSelected
-                        ? 'bg-purple-700 text-white border-2 border-teal-300 shadow-purple-500/30'
-                        : 'bg-teal-950/90 text-teal-300 border border-teal-700/80 hover:bg-teal-900 hover:text-white hover:border-teal-400'
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkerClick(event);
+                    }}
+                    className={`group flex flex-col items-center transition-transform duration-200 cursor-pointer ${
+                      isSelected ? 'scale-110' : 'hover:scale-105'
                     }`}
                   >
-                    {event.title}
-                  </div>
-                  {/* Downward Callout Pointer Triangle */}
-                  <div
-                    className={`mx-auto w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] transition-colors ${
-                      isSelected
-                        ? 'border-t-teal-300'
-                        : 'border-t-teal-700/80 group-hover:border-t-teal-400'
-                    }`}
-                  />
-                </button>
+                    <div
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-medium whitespace-nowrap transition-all shadow-xl max-w-[180px] truncate ${
+                        isSelected
+                          ? 'bg-purple-600 text-white border-2 border-teal-300 shadow-purple-500/40'
+                          : 'bg-slate-900/95 text-teal-300 border border-teal-500/60 hover:bg-teal-950 hover:text-white hover:border-teal-300'
+                      }`}
+                    >
+                      {event.title}
+                    </div>
+                    <div
+                      className={`w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] ${
+                        isSelected
+                          ? 'border-t-teal-300'
+                          : 'border-t-teal-500/60 group-hover:border-t-teal-300'
+                      }`}
+                    />
+                  </button>
+                </Marker>
               );
             })}
-          </div>
+          </Map>
 
           {/* Floating Top-Left Status Pill */}
-          <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-1.5 rounded-md text-xs text-slate-300 shadow-lg">
+          <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-1.5 rounded-md text-xs text-slate-300 shadow-lg pointer-events-none">
             <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
             <span>
               Showing <strong>{filteredEvents.length}</strong> events within{' '}
@@ -279,26 +181,35 @@ export function EventMapView() {
             </span>
           </div>
 
-          {/* Floating Bottom-Right Map Controls */}
+          {/* Floating Bottom-Right WebGL Camera Controls */}
           <div className="absolute bottom-3 right-3 z-20 flex flex-col gap-1 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-1 rounded-md shadow-lg">
             <button
-              onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 1.75))}
-              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors"
+              onClick={() => mapRef.current?.zoomIn({ duration: 300 })}
+              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setZoomLevel((z) => Math.max(z - 0.25, 1))}
-              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors"
+              onClick={() => mapRef.current?.zoomOut({ duration: 300 })}
+              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setZoomLevel(1)}
-              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors"
-              title="Reset Viewport"
+              onClick={() =>
+                mapRef.current?.flyTo({
+                  center: [
+                    INDY_DEFAULT_VIEW.longitude,
+                    INDY_DEFAULT_VIEW.latitude,
+                  ],
+                  zoom: INDY_DEFAULT_VIEW.zoom,
+                  duration: 800,
+                })
+              }
+              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
+              title="Reset Indianapolis Viewport"
             >
               <Compass className="h-4 w-4" />
             </button>
@@ -306,29 +217,29 @@ export function EventMapView() {
         </div>
 
         {/* Right 5 Columns: Hardware-Accelerated Sliding Track Drawer */}
-        <div className="lg:col-span-5 bg-slate-950/95 overflow-hidden relative">
+        <div className="lg:col-span-5 bg-slate-950/95 overflow-hidden relative h-full">
           <div
             className={`flex w-[200%] h-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
               drawerMode === 'detail' ? '-translate-x-1/2' : 'translate-x-0'
             }`}
           >
             {/* Panel 1 (Left Half of Track): Hot Three List */}
-            <div className="w-1/2 p-5 flex flex-col justify-between shrink-0">
-              <div className="space-y-4">
+            <div className="w-1/2 p-5 flex flex-col justify-between shrink-0 overflow-y-auto">
+              <div className="space-y-3.5">
                 <div className="flex items-center justify-between">
-                  <div className="w-12" />
-                  <h2 className="text-2xl font-bold text-center tracking-tight text-white">
+                  <div className="w-14" />
+                  <h2 className="text-xl font-bold text-center tracking-tight text-white">
                     Hot Three
                   </h2>
                   <button
                     onClick={() => setDrawerMode('detail')}
-                    className="text-xs text-purple-400 hover:text-purple-300 font-medium w-12 text-right transition-colors"
+                    className="text-xs text-purple-400 hover:text-purple-300 font-medium w-14 text-right transition-colors cursor-pointer"
                   >
                     Inspect →
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {displayedThreeEvents.map((event) => {
                     const isSelected = event.id === activeEvent?.id;
                     const isPinnedFromMap =
@@ -344,7 +255,7 @@ export function EventMapView() {
                             setSelectedEventId(event.id);
                           }
                         }}
-                        className={`flex gap-3.5 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                        className={`flex gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
                           isSelected
                             ? 'bg-purple-700 text-white shadow-lg ring-1 ring-purple-400/60'
                             : 'bg-slate-900/60 hover:bg-slate-900 text-slate-200 border border-slate-800/80'
@@ -353,11 +264,11 @@ export function EventMapView() {
                         <img
                           src={event.imageUrl}
                           alt={event.title}
-                          className="w-28 h-20 object-cover rounded-md shrink-0"
+                          className="w-24 h-20 object-cover rounded-md shrink-0"
                         />
-                        <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex-1 min-w-0 space-y-0.5">
                           <div className="flex items-center justify-between gap-2">
-                            <h3 className="font-bold text-sm truncate">
+                            <h3 className="font-bold text-xs truncate">
                               {event.title}
                             </h3>
                             <span
@@ -371,7 +282,6 @@ export function EventMapView() {
                             </span>
                           </div>
 
-                          {/* Venue Row + Functional Directions Icon Button */}
                           <div className="flex items-center justify-between text-xs">
                             <span
                               className={`truncate ${
@@ -387,7 +297,7 @@ export function EventMapView() {
                                   target="_blank"
                                   rel="noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className={`p-1 rounded transition-colors shrink-0 ml-2 ${
+                                  className={`p-0.5 rounded transition-colors shrink-0 ml-2 ${
                                     isSelected
                                       ? 'hover:bg-purple-600 text-white'
                                       : 'hover:bg-slate-800 text-slate-300 hover:text-white'
@@ -403,15 +313,14 @@ export function EventMapView() {
                           </div>
 
                           <p
-                            className={`text-xs ${
+                            className={`text-[11px] ${
                               isSelected ? 'text-purple-100' : 'text-slate-400'
                             }`}
                           >
                             {event.cityState} ({event.distanceMiles} mi)
                           </p>
 
-                          {/* Date Row + Functional Add to Calendar Icon Button */}
-                          <div className="flex items-center justify-between text-xs pt-0.5">
+                          <div className="flex items-center justify-between text-[11px]">
                             <span
                               className={
                                 isSelected
@@ -428,7 +337,7 @@ export function EventMapView() {
                                   target="_blank"
                                   rel="noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className={`p-1 rounded transition-colors shrink-0 ml-2 ${
+                                  className={`p-0.5 rounded transition-colors shrink-0 ml-2 ${
                                     isSelected
                                       ? 'hover:bg-purple-600 text-white'
                                       : 'hover:bg-slate-800 text-slate-300 hover:text-white'
@@ -443,10 +352,9 @@ export function EventMapView() {
                             </Tooltip>
                           </div>
 
-                          {/* Taxonomy Pills & Details Trigger */}
                           <div className="flex items-center justify-between pt-1">
                             <div className="flex items-center gap-1.5">
-                              {event.tags.map((tag) => (
+                              {event.tags.slice(0, 2).map((tag) => (
                                 <span
                                   key={tag}
                                   className="px-2 py-0.5 text-[10px] rounded-full bg-slate-950/85 text-slate-100 font-medium"
@@ -456,7 +364,7 @@ export function EventMapView() {
                               ))}
                               {isPinnedFromMap && (
                                 <span className="px-1.5 py-0.5 text-[9px] rounded bg-teal-500/30 border border-teal-300/50 text-teal-100 font-mono">
-                                  Map Pin
+                                  Pinned
                                 </span>
                               )}
                             </div>
@@ -466,7 +374,7 @@ export function EventMapView() {
                                 setSelectedEventId(event.id);
                                 setDrawerMode('detail');
                               }}
-                              className={`text-[11px] font-medium underline underline-offset-2 ${
+                              className={`text-[11px] font-medium underline underline-offset-2 cursor-pointer ${
                                 isSelected
                                   ? 'text-white hover:text-purple-200'
                                   : 'text-purple-400 hover:text-purple-300'
@@ -484,10 +392,10 @@ export function EventMapView() {
             </div>
 
             {/* Panel 2 (Right Half of Track): Selected Event Detail Drawer */}
-            <div className="w-1/2 p-5 flex flex-col justify-between shrink-0">
+            <div className="w-1/2 p-5 flex flex-col justify-between shrink-0 overflow-y-auto">
               {activeEvent && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
                     <button
                       onClick={() => setDrawerMode('hot-three')}
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer"
@@ -500,14 +408,14 @@ export function EventMapView() {
                     </span>
                   </div>
 
-                  <div className="relative h-40 w-full rounded-lg overflow-hidden border border-slate-800">
+                  <div className="relative h-36 w-full rounded-lg overflow-hidden border border-slate-800">
                     <img
                       src={activeEvent.imageUrl}
                       alt={activeEvent.title}
                       className="w-full h-full object-cover transition-all duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+                    <div className="absolute bottom-2.5 left-3 right-3 flex items-end justify-between">
                       <div>
                         <div className="flex gap-1.5 mb-1">
                           {activeEvent.tags.map((tag) => (
@@ -515,15 +423,15 @@ export function EventMapView() {
                               key={tag}
                               className={`px-2 py-0.5 text-[10px] rounded-full border ${
                                 TAXONOMY_STYLES[activeEvent.taxonomy].badgeBg
-                              } ${TAXONOMY_STYLES[activeEvent.taxonomy].badgeText} ${
-                                TAXONOMY_STYLES[activeEvent.taxonomy].border
-                              }`}
+                              } ${
+                                TAXONOMY_STYLES[activeEvent.taxonomy].badgeText
+                              } ${TAXONOMY_STYLES[activeEvent.taxonomy].border}`}
                             >
                               {tag}
                             </span>
                           ))}
                         </div>
-                        <h3 className="text-lg font-bold text-white leading-tight">
+                        <h3 className="text-base font-bold text-white leading-tight">
                           {activeEvent.title}
                         </h3>
                       </div>
@@ -533,8 +441,7 @@ export function EventMapView() {
                     </div>
                   </div>
 
-                  {/* Venue & Date Metadata Box */}
-                  <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-3.5 space-y-2.5 text-xs">
+                  <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-3 space-y-2 text-xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-slate-200">
                         <MapPin className="h-4 w-4 text-purple-400 shrink-0" />
@@ -543,7 +450,8 @@ export function EventMapView() {
                             {activeEvent.venueName}
                           </p>
                           <p className="text-slate-400">
-                            {activeEvent.cityState} • {activeEvent.distanceMiles} miles away
+                            {activeEvent.cityState} • {activeEvent.distanceMiles}{' '}
+                            miles away
                           </p>
                         </div>
                       </div>
@@ -553,16 +461,19 @@ export function EventMapView() {
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition-colors shrink-0"
                       >
-                        <Navigation className="h-3.5 w-3.5 text-teal-400" /> Directions
+                        <Navigation className="h-3.5 w-3.5 text-teal-400" />{' '}
+                        Directions
                       </a>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-800 pt-2.5">
+                    <div className="flex items-center justify-between border-t border-slate-800 pt-2">
                       <div className="text-slate-200">
                         <p className="font-semibold text-white">
                           {activeEvent.formattedDate}
                         </p>
-                        <p className="text-slate-400">Doors open 1 hour prior</p>
+                        <p className="text-slate-400">
+                          Doors open 1 hour prior
+                        </p>
                       </div>
                       <a
                         href={getGoogleCalendarUrl(activeEvent)}
@@ -570,18 +481,18 @@ export function EventMapView() {
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition-colors shrink-0"
                       >
-                        <CalendarPlus className="h-3.5 w-3.5 text-purple-400" /> Add to Cal
+                        <CalendarPlus className="h-3.5 w-3.5 text-purple-400" />{' '}
+                        Add to Cal
                       </a>
                     </div>
                   </div>
 
-                  {/* Cross-Referenced Show-Night Weather Forecast */}
                   {matchedWeather && (
-                    <div className="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-lg px-3.5 py-2.5 text-xs font-mono">
+                    <div className="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-lg px-3 py-2 text-xs font-mono">
                       <div className="flex items-center gap-2">
                         {renderWeatherIcon(matchedWeather.weatherCode)}
                         <span className="text-slate-300 font-sans font-medium">
-                          Show-Night Forecast ({matchedWeather.day}):
+                          Forecast ({matchedWeather.day}):
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
@@ -596,10 +507,9 @@ export function EventMapView() {
                     </div>
                   )}
 
-                  {/* Primary SeatGeek Ticket CTA */}
                   <Button
                     asChild
-                    className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold h-10"
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold h-9 text-xs"
                   >
                     <a
                       href={activeEvent.seatgeekUrl}
@@ -607,7 +517,7 @@ export function EventMapView() {
                       rel="noreferrer"
                     >
                       Find Tickets on SeatGeek{' '}
-                      <ExternalLink className="ml-2 h-4 w-4" />
+                      <ExternalLink className="ml-2 h-3.5 w-3.5" />
                     </a>
                   </Button>
                 </div>
