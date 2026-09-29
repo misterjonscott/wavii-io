@@ -98,16 +98,19 @@ export function mergeLiveWeatherWithDensity(
   });
 }
 
-function calculateMilesFromIndy(lat: number, lon: number): number {
-  const INDY_LAT = 39.7684;
-  const INDY_LON = -86.1581;
+function calculateDistanceMiles(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
   const R = 3958.8;
-  const dLat = ((lat - INDY_LAT) * Math.PI) / 180;
-  const dLon = ((lon - INDY_LON) * Math.PI) / 180;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((INDY_LAT * Math.PI) / 180) *
-      Math.cos((lat * Math.PI) / 180) *
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -148,7 +151,9 @@ function mapSeatGeekTaxonomy(
 }
 
 export function normalizeSeatGeekEvents(
-  rawEvents: SeatGeekRawEvent[]
+  rawEvents: SeatGeekRawEvent[],
+  originLat: number = 39.7684,
+  originLon: number = -86.1581
 ): WaviiEvent[] {
   const usedImageUrls = new Set<string>();
 
@@ -221,7 +226,7 @@ export function normalizeSeatGeekEvents(
       lat,
       lon,
       estimatedPrice,
-      distanceMiles: calculateMilesFromIndy(lat, lon),
+      distanceMiles: calculateDistanceMiles(originLat, originLon, lat, lon),
       popularityScore,
       isHotThree: idx < 3,
     };

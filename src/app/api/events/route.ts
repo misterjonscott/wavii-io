@@ -1,9 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { MOCK_EVENTS } from '@/data/mockData';
 import { normalizeSeatGeekEvents } from '@/lib/adapters';
 import { SeatGeekRawEvent } from '@/types/wavii';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const latParam = searchParams.get('lat');
+  const lonParam = searchParams.get('lon');
+
+  const lat = latParam ? parseFloat(latParam) : 39.7684;
+  const lon = lonParam ? parseFloat(lonParam) : -86.1581;
+
   const clientId =
     process.env.SEATGEEK_CLIENT_ID ||
     process.env.NEXT_PUBLIC_SEATGEEK_CLIENT_ID;
@@ -18,8 +25,8 @@ export async function GET() {
 
   try {
     const url = new URL('https://api.seatgeek.com/2/events');
-    url.searchParams.set('lat', '39.7684');
-    url.searchParams.set('lon', '-86.1581');
+    url.searchParams.set('lat', lat.toString());
+    url.searchParams.set('lon', lon.toString());
     url.searchParams.set('range', '50mi');
     url.searchParams.set('per_page', '40');
     url.searchParams.set('sort', 'score.desc');
@@ -42,7 +49,7 @@ export async function GET() {
       });
     }
 
-    const normalized = normalizeSeatGeekEvents(data.events);
+    const normalized = normalizeSeatGeekEvents(data.events, lat, lon);
     return NextResponse.json({
       source: 'live',
       events: normalized,

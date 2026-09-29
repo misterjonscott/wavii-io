@@ -20,6 +20,9 @@ interface WaviiState {
   weatherSource: 'mock' | 'live';
   eventSource: 'mock' | 'live';
   isHydrating: boolean;
+  originLat: number;
+  originLon: number;
+  detectedCity: string;
 
   // Navigation & Saved State
   activeNavTab: NavTab;
@@ -70,6 +73,9 @@ export const useWaviiStore = create<WaviiState>()(
       weatherSource: 'mock',
       eventSource: 'mock',
       isHydrating: false,
+      originLat: 39.7684,
+      originLon: -86.1581,
+      detectedCity: 'Indianapolis, IN',
 
       activeNavTab: 'explore',
       savedEventIds: [18354358],
@@ -181,12 +187,36 @@ export const useWaviiStore = create<WaviiState>()(
         set({ isHydrating: true });
 
         try {
-          const weatherUrl =
-            'https://api.open-meteo.com/v1/forecast?latitude=39.7684&longitude=-86.1581&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=America%2FIndiana%2FIndianapolis';
+          let lat = 39.7684;
+          let lon = -86.1581;
+
+          try {
+            const position = await new Promise<GeolocationPosition>(
+              (resolve, reject) => {
+                if (!navigator.geolocation) {
+                  reject(new Error('Geolocation not supported'));
+                  return;
+                }
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                  timeout: 10000,
+                  maximumAge: 60000,
+                });
+              }
+            );
+            lat = position.coords.latitude;
+            lon = position.coords.longitude;
+          } catch {
+            lat = 39.7684;
+            lon = -86.1581;
+          }
+
+          set({ originLat: lat, originLon: lon });
+
+          const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=auto`;
 
           const [weatherRes, eventsRes] = await Promise.allSettled([
             fetch(weatherUrl),
-            fetch('/api/events'),
+            fetch(`/api/events?lat=${lat}&lon=${lon}`),
           ]);
 
           if (weatherRes.status === 'fulfilled' && weatherRes.value.ok) {
@@ -207,10 +237,30 @@ export const useWaviiStore = create<WaviiState>()(
               events: WaviiEvent[];
             };
             if (payload?.events?.length > 0) {
+              const topEvents = payload.events.slice(0, 10);
+              const cityCounts = new Map<string, number>();
+              for (const evt of topEvents) {
+                if (evt.cityState) {
+                  cityCounts.set(
+                    evt.cityState,
+                    (cityCounts.get(evt.cityState) || 0) + 1
+                  );
+                }
+              }
+              let bestCity = 'Indianapolis, IN';
+              let maxCount = 0;
+              for (const [city, count] of cityCounts.entries()) {
+                if (count > maxCount) {
+                  maxCount = count;
+                  bestCity = city;
+                }
+              }
+
               set({
                 events: payload.events,
                 eventSource: payload.source,
                 selectedEventId: payload.events[0].id,
+                detectedCity: bestCity,
               });
             }
           }

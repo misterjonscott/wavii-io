@@ -52,6 +52,9 @@ export function EventMapView() {
     distanceMiles,
     savedEventIds,
     toggleSaveEvent,
+    originLat,
+    originLon,
+    detectedCity,
   } = useWaviiStore();
 
   const filteredEvents = useFilteredEvents();
@@ -172,7 +175,11 @@ export function EventMapView() {
         <div className="lg:col-span-7 relative bg-slate-950 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800 h-full">
           <Map
             ref={mapRef}
-            initialViewState={INDY_DEFAULT_VIEW}
+            initialViewState={{
+              longitude: originLon,
+              latitude: originLat,
+              zoom: 9.8,
+            }}
             mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
             style={{ width: '100%', height: '100%' }}
             attributionControl={false}
@@ -262,7 +269,7 @@ export function EventMapView() {
           <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-1.5 rounded-md text-xs text-slate-300 shadow-lg pointer-events-none">
             <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
             <span>
-              <strong>Indianapolis, IN</strong> • Showing{' '}
+              <strong>{detectedCity}</strong> • Showing{' '}
               <strong>{filteredEvents.length}</strong> events within{' '}
               <strong>{distanceMiles} mi</strong>
             </span>
@@ -288,15 +295,15 @@ export function EventMapView() {
               onClick={() =>
                 mapRef.current?.flyTo({
                   center: [
-                    INDY_DEFAULT_VIEW.longitude,
-                    INDY_DEFAULT_VIEW.latitude,
+                    originLon,
+                    originLat,
                   ],
-                  zoom: INDY_DEFAULT_VIEW.zoom,
+                  zoom: 9.8,
                   duration: 800,
                 })
               }
               className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
-              title="Reset Indianapolis Viewport"
+              title="Reset Viewport"
             >
               <Compass className="h-4 w-4" />
             </button>
