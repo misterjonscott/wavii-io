@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Map as MapIcon,
   List as ListIcon,
@@ -14,6 +14,7 @@ import { EventDataTable } from '@/components/wavii/EventDataTable';
 import { EventMapView } from '@/components/wavii/EventMapView';
 import { WeatherDensityMatrix } from '@/components/wavii/WeatherDensityMatrix';
 import { TokenizedFilterBar } from '@/components/wavii/TokenizedFilterBar';
+import { DeveloperConsole } from '@/components/wavii/DeveloperConsole';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -48,6 +49,7 @@ const CATEGORIES: { id: EventTaxonomy; label: string; image: string }[] = [
 ];
 
 export default function WaviiDashboard() {
+  const [showDevConsole, setShowDevConsole] = useState(false);
   const {
     activeNavTab,
     savedEventIds,
@@ -92,7 +94,11 @@ export default function WaviiDashboard() {
             >
               Wavii.io
             </h1>
-            <div className="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-full text-[11px] text-slate-300 font-mono">
+            <button
+              onClick={() => setShowDevConsole(true)}
+              className="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-full text-[11px] text-slate-300 font-mono hover:ring-1 hover:ring-purple-500/50 cursor-pointer transition-all"
+              title="Open Developer Console"
+            >
               <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
               <span>
                 Weather:{' '}
@@ -113,7 +119,7 @@ export default function WaviiDashboard() {
                   {eventSource}
                 </strong>
               </span>
-            </div>
+            </button>
           </div>
 
           <nav className="flex items-center bg-slate-900 border border-slate-800 rounded-md p-1 space-x-1">
@@ -303,6 +309,11 @@ export default function WaviiDashboard() {
 
         {/* Weather & Event Density Matrix */}
         <WeatherDensityMatrix />
+
+        {/* Developer Console Modal */}
+        {showDevConsole && (
+          <DeveloperConsole onClose={() => setShowDevConsole(false)} />
+        )}
       </div>
     </div>
   );
