@@ -28,6 +28,7 @@ import {
   getVenueDirectionsUrl,
   getGoogleCalendarUrl,
 } from '@/lib/eventActions';
+import { getEnvironmentalTags } from '@/lib/adapters';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -113,10 +114,7 @@ export function EventMapView() {
     filteredEvents[0] ||
     events[0];
 
-  const baseTopThree =
-    filteredEvents.length >= 3
-      ? filteredEvents.slice(0, 3)
-      : events.filter((e) => e.isHotThree).slice(0, 3);
+  const baseTopThree = filteredEvents.slice(0, 3);
 
   const isInBaseTopThree = baseTopThree.some((e) => e.id === activeEvent?.id);
   const displayedThreeEvents: WaviiEvent[] =
@@ -330,183 +328,202 @@ export function EventMapView() {
                 </div>
 
                 <div className="space-y-2.5">
-                  {displayedThreeEvents.map((event) => {
-                    const isSelected = event.id === activeEvent?.id;
-                    const isSaved = savedEventIds.includes(event.id);
-                    const style = TAXONOMY_STYLES[event.taxonomy];
-                    const isPinnedFromMap =
-                      !isInBaseTopThree && event.id === activeEvent?.id;
+                  {filteredEvents.length === 0 ? (
+                    <div className="py-16 flex flex-col items-center justify-center text-center space-y-2">
+                      <p className="text-xs font-semibold text-slate-200">
+                        No events match your active filters
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        Try clearing active filters or adjusting radius.
+                      </p>
+                    </div>
+                  ) : (
+                    displayedThreeEvents.map((event) => {
+                      const isSelected = event.id === activeEvent?.id;
+                      const isSaved = savedEventIds.includes(event.id);
+                      const style = TAXONOMY_STYLES[event.taxonomy];
+                      const isPinnedFromMap =
+                        !isInBaseTopThree && event.id === activeEvent?.id;
 
-                    return (
-                      <div
-                        key={event.id}
-                        onClick={() => {
-                          if (isSelected) {
-                            setDrawerMode('detail');
-                          } else {
-                            setSelectedEventId(event.id);
-                          }
-                        }}
-                        className={`flex gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
-                          isSelected
-                            ? 'bg-purple-700 text-white shadow-lg ring-1 ring-purple-400/60'
-                            : 'bg-slate-900/60 hover:bg-slate-900 text-slate-200 border border-slate-800/80'
-                        }`}
-                      >
-                        <img
-                          src={event.imageUrl}
-                          alt={event.title}
-                          className="w-24 h-20 object-cover rounded-md shrink-0"
-                        />
-                        <div className="flex-1 min-w-0 space-y-0.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <h3 className="font-bold text-xs truncate">
-                                {event.title}
-                              </h3>
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={() => {
+                            if (isSelected) {
+                              setDrawerMode('detail');
+                            } else {
+                              setSelectedEventId(event.id);
+                            }
+                          }}
+                          className={`flex gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
+                            isSelected
+                              ? 'bg-purple-700 text-white shadow-lg ring-1 ring-purple-400/60'
+                              : 'bg-slate-900/60 hover:bg-slate-900 text-slate-200 border border-slate-800/80'
+                          }`}
+                        >
+                          <img
+                            src={event.imageUrl}
+                            alt={event.title}
+                            className="w-24 h-20 object-cover rounded-md shrink-0"
+                          />
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <h3 className="font-bold text-xs truncate">
+                                  {event.title}
+                                </h3>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleSaveEvent(event.id);
+                                      }}
+                                      className={`inline-flex items-center justify-center h-5 w-5 rounded-full border transition-colors cursor-pointer shrink-0 ${
+                                        isSaved
+                                          ? 'border-rose-500/80 bg-rose-500/20 text-rose-400'
+                                          : isSelected
+                                          ? 'border-purple-400/60 text-purple-200 hover:text-white'
+                                          : 'border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-500/50'
+                                      }`}
+                                    >
+                                      <Heart
+                                        className={`h-2.5 w-2.5 ${
+                                          isSaved ? 'fill-rose-400' : ''
+                                        }`}
+                                      />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="bg-slate-900 border border-slate-700 text-slate-100 text-xs">
+                                    {isSaved ? 'Remove from Saved' : 'Save Event'}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
+                              <span
+                                className={`text-[11px] font-mono font-semibold shrink-0 ${
+                                  isSelected
+                                    ? 'text-purple-100'
+                                    : 'text-emerald-400'
+                                }`}
+                              >
+                                ${event.estimatedPrice}+
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs">
+                              <span
+                                className={`truncate ${
+                                  isSelected ? 'text-white' : 'text-slate-300'
+                                }`}
+                              >
+                                {event.venueName}
+                              </span>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleSaveEvent(event.id);
-                                    }}
-                                    className={`inline-flex items-center justify-center h-5 w-5 rounded-full border transition-colors cursor-pointer shrink-0 ${
-                                      isSaved
-                                        ? 'border-rose-500/80 bg-rose-500/20 text-rose-400'
-                                        : isSelected
-                                        ? 'border-purple-400/60 text-purple-200 hover:text-white'
-                                        : 'border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-500/50'
+                                  <a
+                                    href={getVenueDirectionsUrl(event)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className={`p-0.5 rounded transition-colors shrink-0 ml-2 ${
+                                      isSelected
+                                        ? 'hover:bg-purple-600 text-white'
+                                        : 'hover:bg-slate-800 text-slate-300 hover:text-white'
                                     }`}
                                   >
-                                    <Heart
-                                      className={`h-2.5 w-2.5 ${
-                                        isSaved ? 'fill-rose-400' : ''
-                                      }`}
-                                    />
-                                  </button>
+                                    <Navigation className="h-3.5 w-3.5" />
+                                  </a>
                                 </TooltipTrigger>
                                 <TooltipContent className="bg-slate-900 border border-slate-700 text-slate-100 text-xs">
-                                  {isSaved ? 'Remove from Saved' : 'Save Event'}
+                                  Get Directions to {event.venueName}
                                 </TooltipContent>
                               </Tooltip>
                             </div>
-                            <span
-                              className={`text-[11px] font-mono font-semibold shrink-0 ${
-                                isSelected
-                                  ? 'text-purple-100'
-                                  : 'text-emerald-400'
+
+                            <p
+                              className={`text-[11px] ${
+                                isSelected ? 'text-purple-100' : 'text-slate-400'
                               }`}
                             >
-                              ${event.estimatedPrice}+
-                            </span>
-                          </div>
+                              {event.cityState} ({event.distanceMiles} mi)
+                            </p>
 
-                          <div className="flex items-center justify-between text-xs">
-                            <span
-                              className={`truncate ${
-                                isSelected ? 'text-white' : 'text-slate-300'
-                              }`}
-                            >
-                              {event.venueName}
-                            </span>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <a
-                                  href={getVenueDirectionsUrl(event)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className={`p-0.5 rounded transition-colors shrink-0 ml-2 ${
-                                    isSelected
-                                      ? 'hover:bg-purple-600 text-white'
-                                      : 'hover:bg-slate-800 text-slate-300 hover:text-white'
-                                  }`}
-                                >
-                                  <Navigation className="h-3.5 w-3.5" />
-                                </a>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-slate-900 border border-slate-700 text-slate-100 text-xs">
-                                Get Directions to {event.venueName}
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-
-                          <p
-                            className={`text-[11px] ${
-                              isSelected ? 'text-purple-100' : 'text-slate-400'
-                            }`}
-                          >
-                            {event.cityState} ({event.distanceMiles} mi)
-                          </p>
-
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span
-                              className={
-                                isSelected
-                                  ? 'text-white font-medium'
-                                  : 'text-slate-300'
-                              }
-                            >
-                              {event.formattedDate}
-                            </span>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <a
-                                  href={getGoogleCalendarUrl(event)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className={`p-0.5 rounded transition-colors shrink-0 ml-2 ${
-                                    isSelected
-                                      ? 'hover:bg-purple-600 text-white'
-                                      : 'hover:bg-slate-800 text-slate-300 hover:text-white'
-                                  }`}
-                                >
-                                  <CalendarPlus className="h-3.5 w-3.5" />
-                                </a>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-slate-900 border border-slate-700 text-slate-100 text-xs">
-                                Add to Google Calendar
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-1">
-                            <div className="flex items-center gap-1.5">
-                              {event.tags.slice(0, 2).map((tag) => (
-                                <span
-                                  key={tag}
-                                  className={`px-2 py-0.5 text-[10px] rounded border ${style.badgeBg} ${style.badgeText} ${style.border} font-medium`}
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                              {isPinnedFromMap && (
-                                <span className="px-1.5 py-0.5 text-[9px] rounded bg-teal-500/30 border border-teal-300/50 text-teal-100 font-mono">
-                                  Pinned
-                                </span>
-                              )}
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span
+                                className={
+                                  isSelected
+                                    ? 'text-white font-medium'
+                                    : 'text-slate-300'
+                                }
+                              >
+                                {event.formattedDate}
+                              </span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <a
+                                    href={getGoogleCalendarUrl(event)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className={`p-0.5 rounded transition-colors shrink-0 ml-2 ${
+                                      isSelected
+                                        ? 'hover:bg-purple-600 text-white'
+                                        : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+                                    }`}
+                                  >
+                                    <CalendarPlus className="h-3.5 w-3.5" />
+                                  </a>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-slate-900 border border-slate-700 text-slate-100 text-xs">
+                                  Add to Google Calendar
+                                </TooltipContent>
+                              </Tooltip>
                             </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedEventId(event.id);
-                                setDrawerMode('detail');
-                              }}
-                              className={`text-[11px] font-medium underline underline-offset-2 cursor-pointer ${
-                                isSelected
-                                  ? 'text-white hover:text-purple-200'
-                                  : 'text-purple-400 hover:text-purple-300'
-                              }`}
-                            >
-                              Details →
-                            </button>
+
+                            <div className="flex items-center justify-between pt-1">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {event.tags.slice(0, 2).map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className={`px-2 py-0.5 text-[10px] rounded border ${style.badgeBg} ${style.badgeText} ${style.border} font-medium`}
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                                {getEnvironmentalTags(event, weatherDensity).map((badge) => (
+                                  <span
+                                    key={badge.type}
+                                    className={`px-1.5 py-0.5 text-[9px] rounded border ${badge.colorClass} font-medium`}
+                                  >
+                                    {badge.label}
+                                  </span>
+                                ))}
+                                {isPinnedFromMap && (
+                                  <span className="px-1.5 py-0.5 text-[9px] rounded bg-teal-500/30 border border-teal-300/50 text-teal-100 font-mono">
+                                    Pinned
+                                  </span>
+                                )}
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEventId(event.id);
+                                  setDrawerMode('detail');
+                                }}
+                                className={`text-[11px] font-medium underline underline-offset-2 cursor-pointer ${
+                                  isSelected
+                                    ? 'text-white hover:text-purple-200'
+                                    : 'text-purple-400 hover:text-purple-300'
+                                }`}
+                              >
+                                Details →
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
             </div>
@@ -537,7 +554,7 @@ export function EventMapView() {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
                     <div className="absolute bottom-2.5 left-3 right-3 flex items-end justify-between">
                       <div>
-                        <div className="flex gap-1.5 mb-1">
+                        <div className="flex flex-wrap gap-1.5 mb-1">
                           {activeEvent.tags.map((tag) => (
                             <span
                               key={tag}
@@ -548,6 +565,14 @@ export function EventMapView() {
                               } ${TAXONOMY_STYLES[activeEvent.taxonomy].border}`}
                             >
                               {tag}
+                            </span>
+                          ))}
+                          {getEnvironmentalTags(activeEvent, weatherDensity).map((badge) => (
+                            <span
+                              key={badge.type}
+                              className={`px-2 py-0.5 text-[10px] rounded border ${badge.colorClass} font-medium`}
+                            >
+                              {badge.label}
                             </span>
                           ))}
                         </div>

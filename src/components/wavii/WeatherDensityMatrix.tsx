@@ -11,14 +11,70 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+function AnimatedCount({ value }: { value: number }) {
+  const [displayVal, setDisplayVal] = React.useState(0);
+
+  React.useEffect(() => {
+    let startTime: number | null = null;
+    const duration = 400;
+    const startVal = displayVal;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const current = Math.round(startVal + (value - startVal) * progress);
+      setDisplayVal(current);
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [value]);
+
+  return <span>{displayVal}</span>;
+}
+
 export function WeatherDensityMatrix() {
   const {
+    events,
     weatherDensity,
     selectedDay,
     selectedCategory,
+    distanceMiles,
+    maxPrice,
+    searchQuery,
+    selectedTags,
+    selectedCities,
+    minHypeScore,
+    activeNavTab,
+    savedEventIds,
     toggleSelectedDay,
     toggleCategoryShortcut,
   } = useWaviiStore();
+
+  const parsedMaxPrice = maxPrice.trim() !== '' ? Number(maxPrice) : null;
+
+  const baseFilteredEvents = events.filter((evt) => {
+    if (activeNavTab === 'saved' && !savedEventIds.includes(evt.id)) return false;
+    if (activeNavTab === 'trending' && evt.popularityScore < 80) return false;
+    if (selectedCategory !== 'all' && evt.taxonomy !== selectedCategory) return false;
+    if (evt.distanceMiles > distanceMiles) return false;
+    if (parsedMaxPrice !== null && !Number.isNaN(parsedMaxPrice) && evt.estimatedPrice > parsedMaxPrice) return false;
+    if (selectedTags.length > 0 && !evt.tags.some((t) => selectedTags.includes(t))) return false;
+    if (selectedCities.length > 0 && !selectedCities.includes(evt.cityState)) return false;
+    if (minHypeScore > 0 && evt.popularityScore < minHypeScore) return false;
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      const matchesText =
+        evt.title.toLowerCase().includes(q) ||
+        evt.venueName.toLowerCase().includes(q) ||
+        evt.cityState.toLowerCase().includes(q) ||
+        evt.tags.some((t) => t.toLowerCase().includes(q));
+      if (!matchesText) return false;
+    }
+    return true;
+  });
 
   const renderWeatherIcon = (code: DailyWeatherAndDensity['weatherCode']) => {
     switch (code) {
@@ -86,7 +142,19 @@ export function WeatherDensityMatrix() {
 
           {/* 7 Day Stacked Bars */}
           {weatherDensity.map((day) => {
-            const total = day.concerts + day.comedy + day.theater + day.sports;
+            const sDay = day.shortDay.toLowerCase();
+            const dayEvents = baseFilteredEvents.filter((evt) => {
+              const lowerDate = evt.formattedDate.toLowerCase();
+              const evtDateIso = evt.datetimeLocal.split('T')[0];
+              return lowerDate.startsWith(sDay) || evtDateIso === day.dateIso;
+            });
+
+            const concerts = dayEvents.filter((e) => e.taxonomy === 'concert').length;
+            const comedy = dayEvents.filter((e) => e.taxonomy === 'comedy').length;
+            const theater = dayEvents.filter((e) => e.taxonomy === 'theater').length;
+            const sports = dayEvents.filter((e) => e.taxonomy === 'sports').length;
+            const total = concerts + comedy + theater + sports;
+
             const isDaySelected = selectedDay === day.day;
 
             return (
@@ -101,7 +169,7 @@ export function WeatherDensityMatrix() {
                     }`}
                   >
                     <div
-                      style={{ height: `${day.concerts * 4}px` }}
+                      style={{ height: `${Math.max(2, concerts * 6)}px` }}
                       className={`w-full bg-purple-500 transition-all ${
                         selectedCategory !== 'all' && selectedCategory !== 'concert'
                           ? 'opacity-25'
@@ -109,7 +177,7 @@ export function WeatherDensityMatrix() {
                       }`}
                     />
                     <div
-                      style={{ height: `${day.comedy * 4}px` }}
+                      style={{ height: `${Math.max(2, comedy * 6)}px` }}
                       className={`w-full bg-rose-500 transition-all ${
                         selectedCategory !== 'all' && selectedCategory !== 'comedy'
                           ? 'opacity-25'
@@ -117,7 +185,7 @@ export function WeatherDensityMatrix() {
                       }`}
                     />
                     <div
-                      style={{ height: `${day.theater * 4}px` }}
+                      style={{ height: `${Math.max(2, theater * 6)}px` }}
                       className={`w-full bg-amber-400 transition-all ${
                         selectedCategory !== 'all' && selectedCategory !== 'theater'
                           ? 'opacity-25'
@@ -125,7 +193,7 @@ export function WeatherDensityMatrix() {
                       }`}
                     />
                     <div
-                      style={{ height: `${day.sports * 4}px` }}
+                      style={{ height: `${Math.max(2, sports * 6)}px` }}
                       className={`w-full bg-emerald-500 transition-all ${
                         selectedCategory !== 'all' && selectedCategory !== 'sports'
                           ? 'opacity-25'
@@ -143,7 +211,7 @@ export function WeatherDensityMatrix() {
                   <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
                     <span className="font-bold text-xs text-white">{day.day}</span>
                     <span className="text-[11px] font-medium text-slate-300">
-                      {total} Events
+                      <AnimatedCount value={total} /> Events
                     </span>
                   </div>
 
@@ -151,19 +219,27 @@ export function WeatherDensityMatrix() {
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
                     <div className="flex items-center justify-between whitespace-nowrap text-purple-300">
                       <span>Concerts:</span>
-                      <span className="font-mono font-semibold ml-1.5">{day.concerts}</span>
+                      <span className="font-mono font-semibold ml-1.5">
+                        <AnimatedCount value={concerts} />
+                      </span>
                     </div>
                     <div className="flex items-center justify-between whitespace-nowrap text-rose-300">
                       <span>Comedy:</span>
-                      <span className="font-mono font-semibold ml-1.5">{day.comedy}</span>
+                      <span className="font-mono font-semibold ml-1.5">
+                        <AnimatedCount value={comedy} />
+                      </span>
                     </div>
                     <div className="flex items-center justify-between whitespace-nowrap text-amber-300">
                       <span>Theater:</span>
-                      <span className="font-mono font-semibold ml-1.5">{day.theater}</span>
+                      <span className="font-mono font-semibold ml-1.5">
+                        <AnimatedCount value={theater} />
+                      </span>
                     </div>
                     <div className="flex items-center justify-between whitespace-nowrap text-emerald-300">
                       <span>Sports:</span>
-                      <span className="font-mono font-semibold ml-1.5">{day.sports}</span>
+                      <span className="font-mono font-semibold ml-1.5">
+                        <AnimatedCount value={sports} />
+                      </span>
                     </div>
                   </div>
 
@@ -186,7 +262,7 @@ export function WeatherDensityMatrix() {
               <button
                 key={day.day}
                 onClick={() => toggleSelectedDay(day.day)}
-                className={`text-center font-medium transition-colors ${
+                className={`text-center font-medium transition-colors cursor-pointer ${
                   isDaySelected
                     ? 'text-purple-400 font-bold underline underline-offset-4'
                     : 'text-slate-300 hover:text-white'

@@ -8,6 +8,7 @@ import {
   SortField,
   SortOrder,
   OpenMeteoRawDaily,
+  OpenMeteoRawAirQuality,
 } from '@/types/wavii';
 import { MOCK_EVENTS, MOCK_WEATHER_DENSITY } from '@/data/mockData';
 import { mergeLiveWeatherWithDensity } from '@/lib/adapters';
@@ -65,11 +66,21 @@ interface WaviiState {
   hydrateLiveData: () => Promise<void>;
 }
 
+export const BLANK_WEATHER_DENSITY: DailyWeatherAndDensity[] = [
+  { dateIso: '2026-12-27', day: 'Sunday', shortDay: 'Sun', weatherCode: 'sun', highTemp: 75, lowTemp: 55, precipChance: 0, concerts: 0, comedy: 0, theater: 0, sports: 0, aqi: 42, sunsetTime: '2026-12-27T17:25:00' },
+  { dateIso: '2026-12-28', day: 'Monday', shortDay: 'Mon', weatherCode: 'sun', highTemp: 75, lowTemp: 55, precipChance: 0, concerts: 0, comedy: 0, theater: 0, sports: 0, aqi: 35, sunsetTime: '2026-12-28T17:26:00' },
+  { dateIso: '2026-12-29', day: 'Tuesday', shortDay: 'Tue', weatherCode: 'sun', highTemp: 75, lowTemp: 55, precipChance: 0, concerts: 0, comedy: 0, theater: 0, sports: 0, aqi: 48, sunsetTime: '2026-12-29T17:27:00' },
+  { dateIso: '2026-12-30', day: 'Wednesday', shortDay: 'Wed', weatherCode: 'sun', highTemp: 75, lowTemp: 55, precipChance: 0, concerts: 0, comedy: 0, theater: 0, sports: 0, aqi: 52, sunsetTime: '2026-12-30T17:28:00' },
+  { dateIso: '2026-12-31', day: 'Thursday', shortDay: 'Thu', weatherCode: 'sun', highTemp: 75, lowTemp: 55, precipChance: 0, concerts: 0, comedy: 0, theater: 0, sports: 0, aqi: 41, sunsetTime: '2026-12-31T17:29:00' },
+  { dateIso: '2027-01-01', day: 'Friday', shortDay: 'Fri', weatherCode: 'sun', highTemp: 75, lowTemp: 55, precipChance: 0, concerts: 0, comedy: 0, theater: 0, sports: 0, aqi: 39, sunsetTime: '2027-01-01T17:30:00' },
+  { dateIso: '2027-01-02', day: 'Saturday', shortDay: 'Sat', weatherCode: 'sun', highTemp: 75, lowTemp: 55, precipChance: 0, concerts: 0, comedy: 0, theater: 0, sports: 0, aqi: 45, sunsetTime: '2027-01-02T17:31:00' },
+];
+
 export const useWaviiStore = create<WaviiState>()(
   persist(
     (set, get) => ({
-      events: MOCK_EVENTS,
-      weatherDensity: MOCK_WEATHER_DENSITY,
+      events: [],
+      weatherDensity: BLANK_WEATHER_DENSITY,
       weatherSource: 'mock',
       eventSource: 'mock',
       isHydrating: false,
@@ -212,12 +223,19 @@ export const useWaviiStore = create<WaviiState>()(
 
           set({ originLat: lat, originLon: lon });
 
-          const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=auto`;
+          const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&temperature_unit=fahrenheit&timezone=auto`;
+          const airQualityUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi`;
 
-          const [weatherRes, eventsRes] = await Promise.allSettled([
+          const [weatherRes, aqRes, eventsRes] = await Promise.allSettled([
             fetch(weatherUrl),
+            fetch(airQualityUrl),
             fetch(`/api/events?lat=${lat}&lon=${lon}`),
           ]);
+
+          let rawAirQuality: OpenMeteoRawAirQuality | undefined;
+          if (aqRes.status === 'fulfilled' && aqRes.value.ok) {
+            rawAirQuality = (await aqRes.value.json()) as OpenMeteoRawAirQuality;
+          }
 
           if (weatherRes.status === 'fulfilled' && weatherRes.value.ok) {
             const rawWeather =
@@ -225,7 +243,8 @@ export const useWaviiStore = create<WaviiState>()(
             if (rawWeather?.daily?.time) {
               const mergedWeather = mergeLiveWeatherWithDensity(
                 rawWeather,
-                get().weatherDensity
+                get().events,
+                rawAirQuality
               );
               set({ weatherDensity: mergedWeather, weatherSource: 'live' });
             }
@@ -256,11 +275,21 @@ export const useWaviiStore = create<WaviiState>()(
                 }
               }
 
+              const mergedWeather = get().weatherSource === 'live'
+                ? mergeLiveWeatherWithDensity(
+                    // We can re-merge or store rawWeather, but let's re-merge with payload.events
+                    { daily: { time: get().weatherDensity.map(d => d.dateIso), weather_code: [], temperature_2m_max: get().weatherDensity.map(d => d.highTemp), temperature_2m_min: get().weatherDensity.map(d => d.lowTemp), precipitation_probability_max: get().weatherDensity.map(d => d.precipChance), sunset: get().weatherDensity.map(d => d.sunsetTime || '') } },
+                    payload.events,
+                    rawAirQuality
+                  )
+                : get().weatherDensity;
+
               set({
                 events: payload.events,
                 eventSource: payload.source,
                 selectedEventId: payload.events[0].id,
                 detectedCity: bestCity,
+                weatherDensity: mergedWeather,
               });
             }
           }

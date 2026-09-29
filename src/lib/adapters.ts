@@ -2,6 +2,7 @@ import {
   DailyWeatherAndDensity,
   EventTaxonomy,
   OpenMeteoRawDaily,
+  OpenMeteoRawAirQuality,
   SeatGeekRawEvent,
   WaviiEvent,
 } from '@/types/wavii';
@@ -64,7 +65,8 @@ export function mapWmoCodeToWeatherIcon(
 
 export function mergeLiveWeatherWithDensity(
   rawWeather: OpenMeteoRawDaily,
-  existingDensity: DailyWeatherAndDensity[]
+  liveEvents: WaviiEvent[],
+  rawAirQuality?: OpenMeteoRawAirQuality
 ): DailyWeatherAndDensity[] {
   const {
     time,
@@ -72,30 +74,101 @@ export function mergeLiveWeatherWithDensity(
     temperature_2m_max,
     temperature_2m_min,
     precipitation_probability_max,
+    sunset,
   } = rawWeather.daily;
 
   return time.slice(0, 7).map((dateIso, idx) => {
     const [year, month, dayNum] = dateIso.split('-').map(Number);
     const localDate = new Date(year, month - 1, dayNum);
     const dayOfWeekIdx = localDate.getDay();
-    const fallback = existingDensity[idx] || existingDensity[0];
+    const sDay = SHORT_DAYS[dayOfWeekIdx].toLowerCase();
+
+    const dayEvents = liveEvents.filter((evt) => {
+      const lowerDate = evt.formattedDate.toLowerCase();
+      const evtDateIso = evt.datetimeLocal.split('T')[0];
+      return lowerDate.startsWith(sDay) || evtDateIso === dateIso;
+    });
+
+    const concerts = dayEvents.filter((e) => e.taxonomy === 'concert').length;
+    const comedy = dayEvents.filter((e) => e.taxonomy === 'comedy').length;
+    const theater = dayEvents.filter((e) => e.taxonomy === 'theater').length;
+    const sports = dayEvents.filter((e) => e.taxonomy === 'sports').length;
+
+    let aqi = 42;
+    if (rawAirQuality?.hourly?.time && rawAirQuality?.hourly?.us_aqi) {
+      const dayHours = rawAirQuality.hourly.time
+        .map((t, i) => ({ t, aqi: rawAirQuality.hourly.us_aqi[i] }))
+        .filter((item) => item.t.startsWith(dateIso) && item.aqi != null);
+      if (dayHours.length > 0) {
+        const sum = dayHours.reduce((acc, h) => acc + h.aqi, 0);
+        aqi = Math.round(sum / dayHours.length);
+      }
+    }
+
+    const sunsetTime = sunset?.[idx] || `${dateIso}T17:30:00`;
 
     return {
       dateIso,
       day: DAY_NAMES[dayOfWeekIdx],
       shortDay: SHORT_DAYS[dayOfWeekIdx],
       weatherCode: mapWmoCodeToWeatherIcon(weather_code[idx] ?? 0),
-      highTemp: Math.round(temperature_2m_max[idx] ?? fallback.highTemp),
-      lowTemp: Math.round(temperature_2m_min[idx] ?? fallback.lowTemp),
-      precipChance: Math.round(
-        precipitation_probability_max[idx] ?? fallback.precipChance
-      ),
-      concerts: fallback.concerts,
-      comedy: fallback.comedy,
-      theater: fallback.theater,
-      sports: fallback.sports,
+      highTemp: Math.round(temperature_2m_max[idx] ?? 75),
+      lowTemp: Math.round(temperature_2m_min[idx] ?? 55),
+      precipChance: Math.round(precipitation_probability_max[idx] ?? 10),
+      concerts: concerts > 0 ? concerts : 2,
+      comedy: comedy > 0 ? comedy : 1,
+      theater: theater > 0 ? theater : 1,
+      sports: sports > 0 ? sports : 1,
+      aqi,
+      sunsetTime,
     };
   });
+}
+
+export interface EnvironmentalBadgeInfo {
+  label: string;
+  type: 'aqi' | 'sunset';
+  colorClass: string;
+}
+
+export function getEnvironmentalTags(
+  event: WaviiEvent,
+  weatherDensity: DailyWeatherAndDensity[]
+): EnvironmentalBadgeInfo[] {
+  const badges: EnvironmentalBadgeInfo[] = [];
+  const eventDateIso = event.datetimeLocal.split('T')[0];
+  const matchedDay =
+    weatherDensity.find((d) => d.dateIso === eventDateIso) || weatherDensity[0];
+
+  if (matchedDay && matchedDay.aqi !== undefined) {
+    const aqi = matchedDay.aqi;
+    let colorClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+    if (aqi >= 50 && aqi < 100) {
+      colorClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+    } else if (aqi >= 100) {
+      colorClass = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+    }
+    badges.push({
+      label: `🍃 AQI: ${aqi}`,
+      type: 'aqi',
+      colorClass,
+    });
+  }
+
+  if (matchedDay && matchedDay.sunsetTime) {
+    const sunsetMs = new Date(matchedDay.sunsetTime).getTime();
+    const eventMs = new Date(event.datetimeLocal).getTime();
+    const diffMinutes = Math.abs(eventMs - sunsetMs) / (1000 * 60);
+    if (diffMinutes <= 45) {
+      badges.push({
+        label: '🌅 Golden Hour Start',
+        type: 'sunset',
+        colorClass: 'bg-amber-400/20 text-amber-300 border-amber-400/40',
+      });
+    }
+  }
+
+  return badges;
 }
 
 function calculateDistanceMiles(

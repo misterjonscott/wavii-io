@@ -14,6 +14,7 @@ import {
 import { useWaviiStore, useFilteredEvents } from '@/store/useWaviiStore';
 import { SortField } from '@/types/wavii';
 import { TAXONOMY_STYLES } from '@/data/mockData';
+import { getEnvironmentalTags } from '@/lib/adapters';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +39,7 @@ export function EventDataTable() {
     selectedEventId,
     savedEventIds,
     selectedTags,
+    weatherDensity,
     setSorting,
     setSelectedEventId,
     setViewMode,
@@ -197,7 +199,7 @@ export function EventDataTable() {
                       </TableCell>
 
                       <TableCell>
-                        <div className="flex gap-1.5">
+                        <div className="flex flex-wrap gap-1.5">
                           {event.tags.map((tag) => {
                             const isTagActive = selectedTags.includes(tag);
                             return (
@@ -221,6 +223,16 @@ export function EventDataTable() {
                               </Badge>
                             );
                           })}
+                          {getEnvironmentalTags(event, weatherDensity).map(
+                            (badge) => (
+                              <span
+                                key={badge.type}
+                                className={`px-2 py-0.5 text-[10px] rounded border ${badge.colorClass} font-medium`}
+                              >
+                                {badge.label}
+                              </span>
+                            )
+                          )}
                         </div>
                       </TableCell>
 

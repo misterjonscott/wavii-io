@@ -208,11 +208,11 @@ export const MOCK_EVENTS: WaviiEvent[] = [
 ];
 
 export const MOCK_WEATHER_DENSITY: DailyWeatherAndDensity[] = [
-  { dateIso: '2026-12-27', day: 'Sunday', shortDay: 'Sun', weatherCode: 'sun', highTemp: 86, lowTemp: 65, precipChance: 22, concerts: 8, comedy: 6, theater: 5, sports: 7 },
-  { dateIso: '2026-12-28', day: 'Monday', shortDay: 'Mon', weatherCode: 'sun', highTemp: 84, lowTemp: 63, precipChance: 15, concerts: 5, comedy: 4, theater: 6, sports: 5 },
-  { dateIso: '2026-12-29', day: 'Tuesday', shortDay: 'Tue', weatherCode: 'cloud', highTemp: 81, lowTemp: 61, precipChance: 10, concerts: 4, comedy: 3, theater: 2, sports: 3 },
-  { dateIso: '2026-12-30', day: 'Wednesday', shortDay: 'Wed', weatherCode: 'rain', highTemp: 85, lowTemp: 64, precipChance: 45, concerts: 6, comedy: 5, theater: 4, sports: 4 },
-  { dateIso: '2026-12-31', day: 'Thursday', shortDay: 'Thu', weatherCode: 'sun', highTemp: 87, lowTemp: 66, precipChance: 30, concerts: 7, comedy: 6, theater: 6, sports: 7 },
-  { dateIso: '2027-01-01', day: 'Friday', shortDay: 'Fri', weatherCode: 'cloud', highTemp: 83, lowTemp: 62, precipChance: 18, concerts: 5, comedy: 5, theater: 3, sports: 3 },
-  { dateIso: '2027-01-02', day: 'Saturday', shortDay: 'Sat', weatherCode: 'sun', highTemp: 86, lowTemp: 65, precipChance: 22, concerts: 9, comedy: 6, theater: 5, sports: 6 },
+  { dateIso: '2026-12-27', day: 'Sunday', shortDay: 'Sun', weatherCode: 'sun', highTemp: 86, lowTemp: 65, precipChance: 22, concerts: 8, comedy: 6, theater: 5, sports: 7, aqi: 42, sunsetTime: '2026-12-27T17:25:00' },
+  { dateIso: '2026-12-28', day: 'Monday', shortDay: 'Mon', weatherCode: 'sun', highTemp: 84, lowTemp: 63, precipChance: 15, concerts: 5, comedy: 4, theater: 6, sports: 5, aqi: 35, sunsetTime: '2026-12-28T17:26:00' },
+  { dateIso: '2026-12-29', day: 'Tuesday', shortDay: 'Tue', weatherCode: 'cloud', highTemp: 81, lowTemp: 61, precipChance: 10, concerts: 4, comedy: 3, theater: 2, sports: 3, aqi: 48, sunsetTime: '2026-12-29T17:27:00' },
+  { dateIso: '2026-12-30', day: 'Wednesday', shortDay: 'Wed', weatherCode: 'rain', highTemp: 85, lowTemp: 64, precipChance: 45, concerts: 6, comedy: 5, theater: 4, sports: 4, aqi: 52, sunsetTime: '2026-12-30T17:28:00' },
+  { dateIso: '2026-12-31', day: 'Thursday', shortDay: 'Thu', weatherCode: 'sun', highTemp: 87, lowTemp: 66, precipChance: 30, concerts: 7, comedy: 6, theater: 6, sports: 7, aqi: 41, sunsetTime: '2026-12-31T17:29:00' },
+  { dateIso: '2027-01-01', day: 'Friday', shortDay: 'Fri', weatherCode: 'cloud', highTemp: 83, lowTemp: 62, precipChance: 18, concerts: 5, comedy: 5, theater: 3, sports: 3, aqi: 39, sunsetTime: '2027-01-01T17:30:00' },
+  { dateIso: '2027-01-02', day: 'Saturday', shortDay: 'Sat', weatherCode: 'sun', highTemp: 86, lowTemp: 65, precipChance: 22, concerts: 9, comedy: 6, theater: 5, sports: 6, aqi: 45, sunsetTime: '2027-01-02T17:31:00' },
 ];

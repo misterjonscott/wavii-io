@@ -67,6 +67,14 @@ export interface OpenMeteoRawDaily {
     temperature_2m_max: number[];
     temperature_2m_min: number[];
     precipitation_probability_max: number[];
+    sunset?: string[];
+  };
+}
+
+export interface OpenMeteoRawAirQuality {
+  hourly: {
+    time: string[];
+    us_aqi: number[];
   };
 }
 
@@ -105,4 +113,6 @@ export interface DailyWeatherAndDensity {
   comedy: number;
   theater: number;
   sports: number;
+  aqi?: number;
+  sunsetTime?: string;
 }
