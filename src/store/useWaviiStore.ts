@@ -75,7 +75,7 @@ export const useWaviiStore = create<WaviiState>()(
       savedEventIds: [18354358],
       isFilterMenuOpen: false,
 
-      viewMode: 'list',
+      viewMode: 'map',
       searchQuery: '',
       maxPrice: '',
       distanceMiles: 50,
