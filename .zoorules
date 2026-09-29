@@ -1,0 +1,56 @@
+# Wavii.io — System Architecture & Context
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+## 1. Project Overview
+Wavii.io is a senior-level portfolio project demonstrating spatial event discovery. It merges live event ticket data (SeatGeek) with live 7-day weather forecasts (Open-Meteo) into a single, cohesive dashboard. The UI focuses on zero-layout-shift design, tokenized filtering, and hardware-accelerated animations.
+
+## 2. Tech Stack
+- **Framework:** Next.js (App Router, Turbopack)
+- **Language:** TypeScript (Strict interfaces for all APIs and State)
+- **Styling:** Tailwind CSS + ShadCN UI (Radix Primitives)
+- **State Management:** Zustand (with `persist` middleware for localStorage)
+- **Mapping:** `maplibre-gl` (v5.x) + `react-map-gl` (Carto Dark Matter vector tiles)
+- **Icons:** Lucide React
+
+## 3. Core Architectural Patterns
+
+### A. The Adapter Pattern (`src/lib/adapters.ts`)
+We never let raw third-party JSON bleed into the UI. 
+- `normalizeSeatGeekEvents()` transforms messy SeatGeek v2 payloads into strict `WaviiEvent` objects, applies intelligent taxonomy mapping, and handles duplicate/missing performer images using deterministic taxonomy-based fallbacks.
+- `mergeLiveWeatherWithDensity()` takes Open-Meteo WMO weather codes and merges them with event density counts to power the bottom matrix.
+
+### B. Zero-Config Server Proxy (`src/app/api/events/route.ts`)
+The SeatGeek API is proxied through a Next.js server route to keep the `SEATGEEK_CLIENT_ID` secure. 
+- **Resilience:** If the API key is missing (e.g., a recruiter clones the repo) or the API returns 0 events, the route gracefully falls back to `MOCK_EVENTS` (a rich Central Indiana dataset). The UI never breaks.
+
+### C. Centralized Reactive Store (`src/store/useWaviiStore.ts`)
+Zustand controls all global state.
+- **Derived Selectors:** `useFilteredEvents()` applies an 8-layer waterfall filter (Saved, Taxonomy, Distance, Max Price, Tags, Cities, Hype Score, Weather/Dry Nights) and sorting logic locally so the UI feels instantaneous.
+- **Persistence:** Uses `persist` to save the user's bookmarked `savedEventIds` to `localStorage`.
+
+## 4. UI/UX Engineering Notes
+
+### Component: `EventDataTable.tsx`
+- **Zero Layout Shift:** The table container is locked to `h-[440px]`. If there are 0 results, an empty state centers inside the container. If there are 1-3 results, the rows do not stretch.
+- **Interactive Tags:** Clicking a genre/tag inside the table row instantly adds it as a filter token to the active store.
+
+### Component: `EventMapView.tsx`
+- **WebGL Map:** Uses MapLibre GL for 60fps rendering. Pinned to `v5.0.0` to avoid Next.js App Router Web Worker compilation bugs.
+- **Hardware-Accelerated Drawer:** The "Hot Three" / "Detail" panels sit side-by-side inside a `w-[200%]` track. Toggling the view applies a `translate-x` with a `cubic-bezier` easing function for a physical sliding effect without unmounting DOM nodes.
+- **Camera Sync:** Clicking a map pin or list item triggers a WebGL `flyTo` camera animation.
+
+### Component: `TokenizedFilterBar.tsx`
+- **Smart Facets:** A dynamic UI component that translates active Zustand states (e.g., `maxPrice`, `selectedTags`, `onlyDryNights`) into removable `[Facet: Value x]` pill tokens.
+
+### Component: `WeatherDensityMatrix.tsx`
+- **Cross-Filtering:** Clicking a day's column filters the entire dashboard to that day. Clicking a taxonomy in the legend dims the other stacked bars and filters the main table.
+- **Tooltips:** ShadCN tooltips are forced into `flex-col` to properly stack the Header, 2x2 Grid, and Footer.
+
+## 5. Action Utilities (`src/lib/eventActions.ts`)
+- `getVenueDirectionsUrl()`: Generates live Google Maps turn-by-turn routing to the venue.
+- `getGoogleCalendarUrl()`: Generates a pre-filled Google Calendar event payload mapping the dates, venue, and SeatGeek ticket links.
