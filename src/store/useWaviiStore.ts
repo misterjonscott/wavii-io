@@ -78,7 +78,7 @@ export const useWaviiStore = create<WaviiState>()(
       detectedCity: 'Indianapolis, IN',
 
       activeNavTab: 'explore',
-      savedEventIds: [18354358],
+      savedEventIds: [],
       isFilterMenuOpen: false,
 
       viewMode: 'map',
@@ -298,6 +298,9 @@ export function useFilteredEvents(): WaviiEvent[] {
   return events
     .filter((evt) => {
       if (activeNavTab === 'saved' && !savedEventIds.includes(evt.id)) {
+        return false;
+      }
+      if (activeNavTab === 'trending' && evt.popularityScore < 80) {
         return false;
       }
       if (selectedCategory !== 'all' && evt.taxonomy !== selectedCategory) {
