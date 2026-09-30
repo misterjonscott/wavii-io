@@ -1,3 +1,8 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+
+# Top-level map configuration (do not nest under packageConfigs)
 allowBuilds:
-  sharp: false
-  unrs-resolver: false
+  "unrs-resolver": true
+  "sharp": true

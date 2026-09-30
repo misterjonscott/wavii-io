@@ -4,5 +4,4 @@ node_modules
 .env*
 README.md
 docs/
-src/components/wavii/DeveloperConsole.tsx
 .DS_Store
