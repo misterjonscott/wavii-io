@@ -1,15 +1,17 @@
-name: Wavii.io CI Pipeline
+name: Wavii.io CI/CD Pipeline
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
-  quality-and-build:
-    name: Typecheck, Lint & Production Build
+  build-and-deploy:
+    name: Typecheck, Build, and Deploy to Cloud Run
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
       - name: Checkout Repository
@@ -34,3 +36,28 @@ jobs:
 
       - name: Run Production Next.js Build
         run: pnpm build
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker Authentication
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/wavii-repo/wavii-io:latest .
+          docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/wavii-repo/wavii-io:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy wavii-io \
+            --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/wavii-repo/wavii-io:latest \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --port 3000 \
+            --set-env-vars SEATGEEK_CLIENT_ID=${{ secrets.SEATGEEK_CLIENT_ID }}
