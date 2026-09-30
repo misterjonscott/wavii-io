@@ -33,7 +33,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} ${pacifico.variable} dark`}
     >
-      <body className="font-sans antialiased bg-slate-950 text-slate-50 selection:bg-purple-500 selection:text-white">
+      <body className="font-sans antialiased bg-surface-dark text-slate-50 selection:bg-purple-500 selection:text-white">
         {children}
       </body>
     </html>

@@ -170,7 +170,7 @@ export function EventMapView() {
     <TooltipProvider delayDuration={120}>
       <div className="grid grid-cols-1 lg:grid-cols-12 h-[440px]">
         {/* Left 7 Columns: Real 60fps WebGL Dark-Mode Street Map */}
-        <div className="lg:col-span-7 relative bg-slate-950 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800 h-full">
+        <div className="lg:col-span-7 relative bg-surface-dark overflow-hidden border-b lg:border-b-0 lg:border-r border-border-muted h-full">
           <Map
             ref={mapRef}
             initialViewState={{
@@ -245,7 +245,7 @@ export function EventMapView() {
                       className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-medium whitespace-nowrap transition-all shadow-xl max-w-[180px] truncate ${
                         isSelected
                           ? 'bg-purple-600 text-white border-2 border-teal-300 shadow-purple-500/40'
-                          : 'bg-slate-900/95 text-teal-300 border border-teal-500/60 hover:bg-teal-950 hover:text-white hover:border-teal-300'
+                          : 'bg-surface-card/95 text-teal-300 border border-teal-500/60 hover:bg-teal-950 hover:text-white hover:border-teal-300'
                       }`}
                     >
                       {event.title}
@@ -264,7 +264,7 @@ export function EventMapView() {
           </Map>
 
           {/* Floating Top-Left Status Pill */}
-          <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-1.5 rounded-md text-xs text-slate-300 shadow-lg pointer-events-none">
+          <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-surface-card/90 backdrop-blur-md border border-border-muted px-3 py-1.5 rounded-md text-xs text-slate-300 shadow-lg pointer-events-none">
             <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
             <span>
               <strong>{detectedCity}</strong> • Showing{' '}
@@ -274,7 +274,7 @@ export function EventMapView() {
           </div>
 
           {/* Floating Bottom-Right WebGL Camera Controls */}
-          <div className="absolute bottom-3 right-3 z-20 flex flex-col gap-1 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-1 rounded-md shadow-lg">
+          <div className="absolute bottom-3 right-3 z-20 flex flex-col gap-1 bg-surface-card/90 backdrop-blur-md border border-border-muted p-1 rounded-md shadow-lg">
             <button
               onClick={() => mapRef.current?.zoomIn({ duration: 300 })}
               className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
@@ -309,7 +309,7 @@ export function EventMapView() {
         </div>
 
         {/* Right 5 Columns: Hardware-Accelerated Sliding Track Drawer */}
-        <div className="lg:col-span-5 bg-slate-950/95 overflow-hidden relative h-full">
+        <div className="lg:col-span-5 bg-surface-dark/95 overflow-hidden relative h-full">
           <div
             className={`flex w-[200%] h-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
               drawerMode === 'detail' ? '-translate-x-1/2' : 'translate-x-0'
@@ -318,7 +318,7 @@ export function EventMapView() {
             {/* Panel 1 (Left Half of Track): Trending Events List */}
             <div className="w-1/2 p-5 flex flex-col justify-between shrink-0 overflow-y-auto">
               <div className="space-y-3.5">
-                <div className="flex flex-col items-center text-center space-y-0.5 pb-1 border-b border-slate-800">
+                <div className="flex flex-col items-center text-center space-y-0.5 pb-1 border-b border-border-muted">
                   <h2 className="text-xl font-bold tracking-tight text-white">
                     Trending Events
                   </h2>
@@ -358,7 +358,7 @@ export function EventMapView() {
                           className={`flex gap-3 p-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
                             isSelected
                               ? 'bg-purple-700 text-white shadow-lg ring-1 ring-purple-400/60'
-                              : 'bg-slate-900/60 hover:bg-slate-900 text-slate-200 border border-slate-800/80'
+                              : 'bg-surface-card/60 hover:bg-surface-card text-slate-200 border border-border-muted/80'
                           }`}
                         >
                           <img
@@ -394,7 +394,7 @@ export function EventMapView() {
                                       />
                                     </button>
                                   </TooltipTrigger>
-                                  <TooltipContent className="bg-slate-900 border border-slate-700 text-slate-100 text-xs">
+                                  <TooltipContent className="bg-surface-card border border-slate-700 text-slate-100 text-xs">
                                     {isSaved ? 'Remove from Saved' : 'Save Event'}
                                   </TooltipContent>
                                 </Tooltip>
@@ -434,7 +434,7 @@ export function EventMapView() {
                                     <Navigation className="h-3.5 w-3.5" />
                                   </a>
                                 </TooltipTrigger>
-                                <TooltipContent className="bg-slate-900 border border-slate-700 text-slate-100 text-xs">
+                                <TooltipContent className="bg-surface-card border border-slate-700 text-slate-100 text-xs">
                                   Get Directions to {event.venueName}
                                 </TooltipContent>
                               </Tooltip>
@@ -474,7 +474,7 @@ export function EventMapView() {
                                     <CalendarPlus className="h-3.5 w-3.5" />
                                   </a>
                                 </TooltipTrigger>
-                                <TooltipContent className="bg-slate-900 border border-slate-700 text-slate-100 text-xs">
+                                <TooltipContent className="bg-surface-card border border-slate-700 text-slate-100 text-xs">
                                   Add to Google Calendar
                                 </TooltipContent>
                               </Tooltip>
@@ -532,7 +532,7 @@ export function EventMapView() {
             <div className="w-1/2 p-5 flex flex-col justify-between shrink-0 overflow-y-auto">
               {activeEvent && (
                 <div className="space-y-3.5">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                  <div className="flex items-center justify-between border-b border-border-muted pb-2.5">
                     <button
                       onClick={() => setDrawerMode('hot-three')}
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer"
@@ -545,7 +545,7 @@ export function EventMapView() {
                     </span>
                   </div>
 
-                  <div className="relative h-36 w-full rounded-lg overflow-hidden border border-slate-800">
+                  <div className="relative h-36 w-full rounded-lg overflow-hidden border border-border-muted">
                     <img
                       src={activeEvent.imageUrl}
                       alt={activeEvent.title}
@@ -590,7 +590,7 @@ export function EventMapView() {
                                 className={`inline-flex items-center justify-center h-6 w-6 rounded-full border transition-colors cursor-pointer shrink-0 ${
                                   isSavedActive
                                     ? 'border-rose-500/80 bg-rose-500/20 text-rose-400'
-                                    : 'border-slate-700 bg-slate-900/80 text-slate-300 hover:text-rose-400 hover:border-rose-500/50'
+                                    : 'border-slate-700 bg-surface-card/80 text-slate-300 hover:text-rose-400 hover:border-rose-500/50'
                                 }`}
                               >
                                 <Heart
@@ -600,7 +600,7 @@ export function EventMapView() {
                                 />
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent className="bg-slate-900 border border-slate-700 text-slate-100 text-xs">
+                            <TooltipContent className="bg-surface-card border border-slate-700 text-slate-100 text-xs">
                               {isSavedActive ? 'Remove from Saved' : 'Save Event'}
                             </TooltipContent>
                           </Tooltip>
@@ -612,7 +612,7 @@ export function EventMapView() {
                     </div>
                   </div>
 
-                  <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-3 space-y-2 text-xs">
+                  <div className="bg-surface-card/90 border border-border-muted rounded-lg p-3 space-y-2 text-xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-slate-200">
                         <MapPin className="h-4 w-4 text-purple-400 shrink-0" />
@@ -637,7 +637,7 @@ export function EventMapView() {
                       </a>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-800 pt-2">
+                    <div className="flex items-center justify-between border-t border-border-muted pt-2">
                       <div className="text-slate-200">
                         <p className="font-semibold text-white">
                           {activeEvent.formattedDate}
@@ -659,7 +659,7 @@ export function EventMapView() {
                   </div>
 
                   {matchedWeather && (
-                    <div className="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-lg px-3 py-2 text-xs font-mono">
+                    <div className="flex items-center justify-between bg-surface-card/60 border border-border-muted/80 rounded-lg px-3 py-2 text-xs font-mono">
                       <div className="flex items-center gap-2">
                         {renderWeatherIcon(matchedWeather.weatherCode)}
                         <span className="text-slate-300 font-sans font-medium">

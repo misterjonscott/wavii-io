@@ -92,10 +92,10 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-950 border border-slate-800 rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col text-slate-100 font-mono text-xs">
+    <div className="fixed inset-0 z-50 bg-surface-dark/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-surface-dark border border-border-muted rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col text-slate-100 font-mono text-xs">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/60">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-muted bg-surface-card/60">
           <div className="flex items-center gap-2.5">
             <Terminal className="h-4 w-4 text-purple-400" />
             <h2 className="font-bold text-sm tracking-wide text-white font-sans">
@@ -121,7 +121,7 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
               <Cpu className="h-3.5 w-3.5 text-emerald-400" />
               <span>Section 1: Live Zustand Store & Geolocation State</span>
             </div>
-            <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-4 overflow-x-auto shadow-inner">
+            <div className="bg-surface-card/90 border border-border-muted rounded-lg p-4 overflow-x-auto shadow-inner">
               <pre className="text-emerald-400 leading-relaxed">
                 {JSON.stringify(activeStatePayload, null, 2)}
               </pre>
@@ -141,7 +141,7 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
                   <span>Raw SeatGeek API Payload (Nested & Verbose)</span>
                   <span className="text-[10px] text-slate-500 font-mono">External</span>
                 </div>
-                <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-4 overflow-x-auto flex-1 shadow-inner">
+                <div className="bg-surface-card/90 border border-border-muted rounded-lg p-4 overflow-x-auto flex-1 shadow-inner">
                   <pre className="text-rose-300/90 leading-relaxed">
                     {JSON.stringify(rawSeatGeekMock, null, 2)}
                   </pre>
@@ -154,7 +154,7 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
                   <span>Sanitized WaviiEvent (Normalized & Distance-Aware)</span>
                   <span className="text-[10px] text-slate-500 font-mono">Internal Store</span>
                 </div>
-                <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-4 overflow-x-auto flex-1 shadow-inner">
+                <div className="bg-surface-card/90 border border-border-muted rounded-lg p-4 overflow-x-auto flex-1 shadow-inner">
                   <pre className="text-purple-300 leading-relaxed">
                     {JSON.stringify(sanitizedEvent, null, 2)}
                   </pre>
@@ -165,7 +165,7 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
         </div>
 
         {/* Modal Footer */}
-        <div className="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="px-5 py-3 border-t border-border-muted bg-surface-card/60 flex items-center justify-between text-[11px] text-slate-400">
           <span>Wavii Architecture • MapLibre GL • Zustand • Open-Meteo & SeatGeek APIs</span>
           <button
             onClick={onClose}

@@ -46,6 +46,16 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-surface-glass: rgba(15, 23, 42, 0.90);
+  --color-surface-dark: #020617;
+  --color-surface-card: #0f172a;
+  --color-border-muted: #1e293b;
+  --color-border-accent: #5eead4;
+  --color-accent-primary: #9333ea;
+  --color-text-hype: #2dd4bf;
+  --font-size-micro: 11px;
+  --font-size-nano: 10px;
+  --font-size-pico: 9px;
 }
 
 :root {

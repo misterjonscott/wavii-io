@@ -98,9 +98,9 @@ export function WeatherDensityMatrix() {
 
   return (
     <TooltipProvider delayDuration={100}>
-      <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 space-y-3 font-mono">
+      <section className="rounded-xl border border-border-muted bg-surface-card/50 p-4 space-y-3 font-mono">
         {/* Top Weather Row */}
-        <div className="grid grid-cols-8 gap-3 items-center text-xs text-slate-300 border-b border-slate-800 pb-2">
+        <div className="grid grid-cols-8 gap-3 items-center text-xs text-slate-300 border-b border-border-muted pb-2">
           <div className="font-semibold text-center text-slate-300">Weather</div>
           {weatherDensity.map((day) => (
             <div
@@ -164,8 +164,8 @@ export function WeatherDensityMatrix() {
                     onClick={() => toggleSelectedDay(day.day)}
                     className={`flex flex-col justify-end h-full rounded-t-md overflow-hidden transition-all cursor-pointer ${
                       isDaySelected
-                        ? 'ring-2 ring-purple-400 bg-slate-900'
-                        : 'bg-slate-950/40 hover:bg-slate-900/70'
+                        ? 'ring-2 ring-purple-400 bg-surface-card'
+                        : 'bg-surface-dark/40 hover:bg-surface-card/70'
                     }`}
                   >
                     <div
@@ -205,10 +205,10 @@ export function WeatherDensityMatrix() {
                 <TooltipContent
                   side="top"
                   sideOffset={8}
-                  className="flex flex-col items-stretch min-w-[190px] bg-slate-900 border border-slate-700 text-slate-100 p-3 space-y-2 font-sans shadow-xl"
+                  className="flex flex-col items-stretch min-w-[190px] bg-surface-card border border-slate-700 text-slate-100 p-3 space-y-2 font-sans shadow-xl"
                 >
                   {/* Row 1: Header */}
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                  <div className="flex items-center justify-between border-b border-border-muted pb-1.5">
                     <span className="font-bold text-xs text-white">{day.day}</span>
                     <span className="text-[11px] font-medium text-slate-300">
                       <AnimatedCount value={total} /> Events
@@ -244,7 +244,7 @@ export function WeatherDensityMatrix() {
                   </div>
 
                   {/* Row 3: Footer Action Hint */}
-                  <p className="text-[10px] text-slate-400 border-t border-slate-800/80 pt-1.5 text-center whitespace-nowrap">
+                  <p className="text-[10px] text-slate-400 border-t border-border-muted/80 pt-1.5 text-center whitespace-nowrap">
                     Click bar to filter by {day.day}
                   </p>
                 </TooltipContent>
@@ -254,7 +254,7 @@ export function WeatherDensityMatrix() {
         </div>
 
         {/* Bottom Day Labels */}
-        <div className="grid grid-cols-8 gap-3 items-center text-xs text-slate-400 border-t border-slate-800 pt-2">
+        <div className="grid grid-cols-8 gap-3 items-center text-xs text-slate-400 border-t border-border-muted pt-2">
           <div className="font-semibold text-center text-slate-300">Day</div>
           {weatherDensity.map((day) => {
             const isDaySelected = selectedDay === day.day;

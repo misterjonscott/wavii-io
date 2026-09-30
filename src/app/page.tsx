@@ -83,7 +83,7 @@ export default function WaviiDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 px-6 py-5 font-sans">
+    <div className="min-h-screen bg-surface-dark text-slate-50 px-6 py-5 font-sans">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Top Header */}
         <header className="flex items-center justify-between">
@@ -96,7 +96,7 @@ export default function WaviiDashboard() {
             </h1>
             <button
               onClick={() => setShowDevConsole(true)}
-              className="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-full text-[11px] text-slate-300 font-mono hover:ring-1 hover:ring-purple-500/50 cursor-pointer transition-all"
+              className="hidden sm:flex items-center gap-2 bg-surface-card/90 border border-border-muted px-2.5 py-1 rounded-full text-[11px] text-slate-300 font-mono hover:ring-1 hover:ring-purple-500/50 cursor-pointer transition-all"
               title="Open Developer Console"
             >
               <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
@@ -122,7 +122,7 @@ export default function WaviiDashboard() {
             </button>
           </div>
 
-          <nav className="flex items-center bg-slate-900 border border-slate-800 rounded-md p-1 space-x-1">
+          <nav className="flex items-center bg-surface-card border border-border-muted rounded-md p-1 space-x-1">
             {navItems.map((item) => {
               const isActive = activeNavTab === item.id;
               return (
@@ -161,7 +161,7 @@ export default function WaviiDashboard() {
             className={`h-9 text-xs transition-colors cursor-pointer ${
               isFilterMenuOpen
                 ? 'bg-purple-950/60 border-purple-500 text-purple-100'
-                : 'bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800 hover:text-white'
+                : 'bg-surface-card border-border-muted text-slate-200 hover:bg-slate-800 hover:text-white'
             }`}
           >
             Add filters{' '}
@@ -173,7 +173,7 @@ export default function WaviiDashboard() {
           </Button>
 
           {/* Segmented Map / List Control */}
-          <div className="flex items-center bg-slate-900 p-1 rounded-md border border-slate-800 h-9">
+          <div className="flex items-center bg-surface-card p-1 rounded-md border border-border-muted h-9">
             <button
               onClick={() => setViewMode('map')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
@@ -203,7 +203,7 @@ export default function WaviiDashboard() {
               placeholder="Enter location, venue, or artist..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-9 bg-slate-900 border-slate-800 text-slate-100 !text-xs placeholder:text-xs placeholder:text-slate-400 focus-visible:ring-purple-500"
+              className="pl-8 h-9 bg-surface-card border-border-muted text-slate-100 !text-xs placeholder:text-xs placeholder:text-slate-400 focus-visible:ring-purple-500"
             />
           </div>
 
@@ -222,7 +222,7 @@ export default function WaviiDashboard() {
                 placeholder="Any"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className="pl-6 pr-2.5 h-9 bg-slate-900 border-slate-800 text-slate-100 font-mono !text-xs placeholder:font-sans placeholder:text-xs placeholder:text-slate-500 focus-visible:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="pl-6 pr-2.5 h-9 bg-surface-card border-border-muted text-slate-100 font-mono !text-xs placeholder:font-sans placeholder:text-xs placeholder:text-slate-500 focus-visible:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
           </div>
@@ -234,10 +234,10 @@ export default function WaviiDashboard() {
               value={String(distanceMiles)}
               onValueChange={(val) => setDistanceMiles(Number(val))}
             >
-              <SelectTrigger className="w-28 h-9 bg-slate-900 border-slate-800 text-slate-200 !text-xs">
+              <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 !text-xs">
                 <SelectValue placeholder="Distance" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+              <SelectContent className="bg-surface-card border-border-muted text-slate-200">
                 <SelectItem value="5">5 miles</SelectItem>
                 <SelectItem value="10">10 miles</SelectItem>
                 <SelectItem value="25">25 miles</SelectItem>
@@ -255,10 +255,10 @@ export default function WaviiDashboard() {
                 setSelectedCategory(val as 'all' | EventTaxonomy)
               }
             >
-              <SelectTrigger className="w-28 h-9 bg-slate-900 border-slate-800 text-slate-200 !text-xs">
+              <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 !text-xs">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+              <SelectContent className="bg-surface-card border-border-muted text-slate-200">
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="concert">Concerts</SelectItem>
                 <SelectItem value="comedy">Comedy</SelectItem>
@@ -273,7 +273,7 @@ export default function WaviiDashboard() {
         <TokenizedFilterBar />
 
         {/* Main Viewport: Fixed-Height List View vs Real WebGL Map + Sliding Drawer */}
-        <section className="rounded-xl border border-slate-800 bg-slate-900/70 overflow-hidden shadow-2xl">
+        <section className="rounded-xl border border-border-muted bg-surface-card/70 overflow-hidden shadow-2xl">
           {viewMode === 'list' ? <EventDataTable /> : <EventMapView />}
         </section>
 
@@ -296,7 +296,7 @@ export default function WaviiDashboard() {
                   alt={cat.label}
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-slate-950/50 group-hover:bg-slate-950/30 transition-colors" />
+                <div className="absolute inset-0 bg-surface-dark/50 group-hover:bg-surface-dark/30 transition-colors" />
                 <div className="relative z-10 flex items-center justify-center h-full">
                   <span className="text-2xl font-bold text-white tracking-wide drop-shadow-md">
                     {cat.label}

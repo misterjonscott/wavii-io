@@ -65,12 +65,12 @@ export function EventDataTable() {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="h-[440px] flex flex-col bg-slate-900/40">
+      <div className="h-[440px] flex flex-col bg-surface-card/40">
         {/* Scrollable Table Viewport with Sticky Header */}
         <div className="flex-1 overflow-y-auto">
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800">
-              <TableRow className="border-slate-800 hover:bg-transparent">
+            <TableHeader className="sticky top-0 z-10 bg-surface-card/95 backdrop-blur border-b border-border-muted">
+              <TableRow className="border-border-muted hover:bg-transparent">
                 <TableHead className="w-12 text-slate-300 font-semibold text-xs">
                   #
                 </TableHead>
@@ -143,7 +143,7 @@ export function EventDataTable() {
                         setSelectedEventId(event.id);
                         setViewMode('map');
                       }}
-                      className={`h-11 border-slate-800/80 transition-colors cursor-pointer text-xs ${
+                      className={`h-11 border-border-muted/80 transition-colors cursor-pointer text-xs ${
                         isSelected
                           ? 'bg-purple-950/35 hover:bg-purple-950/45'
                           : 'hover:bg-slate-800/50'
@@ -166,12 +166,12 @@ export function EventDataTable() {
                                 <TooltipTrigger asChild>
                                   <span
                                     onClick={(e) => e.stopPropagation()}
-                                    className="absolute -bottom-1 -right-1 bg-slate-900 border border-slate-700 rounded-full p-0.5 text-slate-300 hover:text-white"
+                                    className="absolute -bottom-1 -right-1 bg-surface-card border border-slate-700 rounded-full p-0.5 text-slate-300 hover:text-white"
                                   >
                                     <Info className="h-2.5 w-2.5" />
                                   </span>
                                 </TooltipTrigger>
-                                <TooltipContent className="bg-slate-900 border-slate-700 text-slate-200 text-[11px]">
+                                <TooltipContent className="bg-surface-card border-slate-700 text-slate-200 text-[11px]">
                                   {event.imageAttribution}
                                 </TooltipContent>
                               </Tooltip>
@@ -258,7 +258,7 @@ export function EventDataTable() {
                                 />
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent className="bg-slate-900 border-slate-700 text-slate-100 text-xs">
+                            <TooltipContent className="bg-surface-card border-slate-700 text-slate-100 text-xs">
                               {isSaved ? 'Remove from Saved' : 'Save Event'}
                             </TooltipContent>
                           </Tooltip>
@@ -275,7 +275,7 @@ export function EventDataTable() {
                                 <DollarSign className="h-3.5 w-3.5" />
                               </a>
                             </TooltipTrigger>
-                            <TooltipContent className="bg-slate-900 border-slate-700 text-slate-100 text-xs">
+                            <TooltipContent className="bg-surface-card border-slate-700 text-slate-100 text-xs">
                               Est. from ${event.estimatedPrice} • View on
                               SeatGeek
                             </TooltipContent>
@@ -317,7 +317,7 @@ export function EventDataTable() {
         </div>
 
         {/* Subtle Footer Status Bar inside the Fixed Container */}
-        <div className="border-t border-slate-800/80 bg-slate-950/60 px-4 py-1.5 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="border-t border-border-muted/80 bg-surface-dark/60 px-4 py-1.5 flex items-center justify-between text-[11px] text-slate-400">
           <span>
             Showing <strong className="text-slate-200">{filteredEvents.length}</strong>{' '}
             {filteredEvents.length === 1 ? 'event' : 'events'}
