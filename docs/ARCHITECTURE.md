@@ -16,3 +16,109 @@
 - **Graceful Geolocation Degradation:** The app attempts to use `navigator.geolocation` on load. If the user allows it, coordinates update dynamically and reverse-geocode to the most common city in the SeatGeek payload. If blocked or missing, it gracefully falls back to Indianapolis without breaking the UI.
 - **The Developer Console (Transparency Pattern):** Technical reviewers can click the `LIVE` header badges to inspect the global Zustand state and see the Adapter Pattern in action via a split-pane raw/sanitized JSON view.
 - **Map Clustering (`use-supercluster`):** We use `use-supercluster` rather than MapLibre's native GeoJSON layers. This allows us to group dense events into numbered cluster markers while preserving our ability to render highly styled React/Tailwind markers for individual events.
+
+## 4. Live Type Specifications
+<!-- START AUTO-GENERATED SPECS -->
+### File: `wavii.ts`
+
+/**
+ * Raw SeatGeek API v2 Payload Subset
+ * Demonstrates we know how to type external third-party payloads safely
+ */
+```typescript
+export interface SeatGeekRawEvent {
+  id: number;
+  title: string;
+  short_title: string;
+  datetime_local: string;
+  url: string;
+  type: string;
+  score: number;
+  popularity: number;
+  stats: { lowest_price?: number | null | undefined; highest_price?: number | null | undefined; event_count?: number | undefined; };
+  venue: { id: number; name: string; city: string; state: string; display_location: string; location: { lat: number; lon: number; }; };
+  performers: { id: number; name: string; image: string; image_license?: string | undefined; image_rights_message?: string | null | undefined; genres?: { id: number; name: string; slug: string; }[] | undefined; }[];
+  taxonomies: { id: number; name: string; }[];
+}
+```
+
+/**
+ * Raw Open-Meteo 7-Day Forecast Payload
+ */
+```typescript
+export interface OpenMeteoRawDaily {
+  daily: { time: string[]; weather_code: number[]; temperature_2m_max: number[]; temperature_2m_min: number[]; precipitation_probability_max: number[]; sunset?: string[] | undefined; };
+}
+```
+
+```typescript
+export interface OpenMeteoRawAirQuality {
+  hourly: { time: string[]; us_aqi: number[]; };
+}
+```
+
+/**
+ * Normalized UI Event Model consumed by Wavii components
+ */
+```typescript
+export interface WaviiEvent {
+  id: number;
+  title: string;
+  venueName: string;
+  cityState: string;
+  datetimeLocal: string;
+  formattedDate: string;
+  taxonomy: import("/Users/jonscott/Documents/wavii-io/src/types/wavii").EventTaxonomy;
+  tags: string[];
+  imageUrl: string;
+  imageAttribution?: string | null | undefined;
+  seatgeekUrl: string;
+  lat: number;
+  lon: number;
+  estimatedPrice: number;
+  distanceMiles: number;
+  popularityScore: number;
+  isHotThree?: boolean | undefined;
+}
+```
+
+```typescript
+export interface DailyWeatherAndDensity {
+  dateIso: string;
+  day: string;
+  shortDay: string;
+  weatherCode: "sun" | "cloud" | "rain" | "snow";
+  highTemp: number;
+  lowTemp: number;
+  precipChance: number;
+  concerts: number;
+  comedy: number;
+  theater: number;
+  sports: number;
+  aqi?: number | undefined;
+  sunsetTime?: string | undefined;
+}
+```
+
+```typescript
+export type EventTaxonomy = 'concert' | 'comedy' | 'theater' | 'sports';
+```
+
+```typescript
+export type ViewMode = 'map' | 'list';
+```
+
+```typescript
+export type SortField = | 'title'
+  | 'venue'
+  | 'city'
+  | 'date'
+  | 'price'
+  | 'distance'
+  | 'popularity';
+```
+
+```typescript
+export type SortOrder = 'asc' | 'desc';
+```
+<!-- END AUTO-GENERATED SPECS -->
