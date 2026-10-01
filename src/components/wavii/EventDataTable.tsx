@@ -191,13 +191,13 @@ export function EventDataTable() {
                         </div>
                       </TableCell>
 
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-sm text-slate-300">
                         {event.venueName}
                       </TableCell>
 
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-sm text-slate-300">
                         <span>{event.cityState}</span>
-                        <span className="ml-2 text-[10px] text-slate-400">
+                        <span className="ml-2 text-xs text-slate-400">
                           ({event.distanceMiles} mi)
                         </span>
                       </TableCell>

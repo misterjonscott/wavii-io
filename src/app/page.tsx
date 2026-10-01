@@ -1,20 +1,27 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Map as MapIcon,
-  List as ListIcon,
   Search,
   Plus,
   Radio,
+  Sparkles,
+  MapPin,
+  Navigation,
+  CalendarPlus,
+  ExternalLink,
+  Heart,
+  ArrowLeft,
 } from 'lucide-react';
 import { useWaviiStore, NavTab } from '@/store/useWaviiStore';
-import { EventTaxonomy } from '@/types/wavii';
+import { EventTaxonomy, WaviiEvent } from '@/types/wavii';
 import { EventDataTable } from '@/components/wavii/EventDataTable';
-import { EventMapView } from '@/components/wavii/EventMapView';
 import { WeatherDensityMatrix } from '@/components/wavii/WeatherDensityMatrix';
 import { TokenizedFilterBar } from '@/components/wavii/TokenizedFilterBar';
 import { DeveloperConsole } from '@/components/wavii/DeveloperConsole';
+import { TAXONOMY_STYLES } from '@/data/mockData';
+import { getEnvironmentalTags } from '@/lib/adapters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,6 +31,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const CATEGORIES: { id: EventTaxonomy; label: string; image: string }[] = [
   {
@@ -48,22 +61,183 @@ const CATEGORIES: { id: EventTaxonomy; label: string; image: string }[] = [
   },
 ];
 
+function getGoogleCalendarUrl(event: WaviiEvent): string {
+  const title = encodeURIComponent(event.title);
+  const location = encodeURIComponent(`${event.venueName}, ${event.cityState}`);
+  const details = encodeURIComponent(`Find tickets and details on Wavii.io: ${event.seatgeekUrl}`);
+  const start = event.datetimeLocal.replace(/[-:]/g, '');
+  const endDt = new Date(new Date(event.datetimeLocal).getTime() + 3 * 3600 * 1000);
+  const end = endDt.toISOString().replace(/[-:]/g, '');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&location=${location}&details=${details}`;
+}
+
+function getVenueDirectionsUrl(event: WaviiEvent): string {
+  const dest = encodeURIComponent(`${event.venueName} ${event.cityState}`);
+  return `https://www.google.com/maps/search/?api=1&query=${dest}`;
+}
+
+function EventDetail() {
+  const { events, selectedEventId, setSelectedEventId, savedEventIds, toggleSaveEvent, weatherDensity } = useWaviiStore();
+  const activeEvent = events.find((e) => e.id === selectedEventId);
+  if (!activeEvent) return null;
+
+  const isSavedActive = savedEventIds.includes(activeEvent.id);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.3 }}
+      className="rounded-xl border border-border-muted bg-surface-card/90 p-5 space-y-4 shadow-2xl"
+    >
+      <div className="flex items-center justify-between border-b border-border-muted pb-3">
+        <button
+          onClick={() => setSelectedEventId(null)}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to Explore
+        </button>
+        <span className="inline-flex items-center gap-1 text-xs font-mono text-purple-400">
+          <Sparkles className="h-3.5 w-3.5" /> Hype Score:{' '}
+          {activeEvent.popularityScore}/100
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+        <div className="relative h-40 rounded-lg overflow-hidden border border-border-muted">
+          <img
+            src={activeEvent.imageUrl}
+            alt={activeEvent.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+          <span className="absolute bottom-2 left-2.5 bg-emerald-500 text-slate-950 font-mono font-bold text-xs px-2 py-0.5 rounded">
+            From ${activeEvent.estimatedPrice}
+          </span>
+        </div>
+
+        <div className="md:col-span-2 space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {activeEvent.tags.map((tag) => (
+              <span
+                key={tag}
+                className={`px-2 py-0.5 text-[10px] rounded border ${
+                  TAXONOMY_STYLES[activeEvent.taxonomy].badgeBg
+                } ${
+                  TAXONOMY_STYLES[activeEvent.taxonomy].badgeText
+                } ${TAXONOMY_STYLES[activeEvent.taxonomy].border}`}
+              >
+                {tag}
+              </span>
+            ))}
+            {getEnvironmentalTags(activeEvent, weatherDensity).map((badge) => (
+              <span
+                key={badge.type}
+                className={`px-2 py-0.5 text-[10px] rounded border ${badge.colorClass} font-medium`}
+              >
+                {badge.label}
+              </span>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-bold text-white leading-tight">
+              {activeEvent.title}
+            </h3>
+            <button
+              onClick={() => toggleSaveEvent(activeEvent.id)}
+              className={`inline-flex items-center justify-center h-6 w-6 rounded-full border transition-colors cursor-pointer shrink-0 ${
+                isSavedActive
+                  ? 'border-rose-500/80 bg-rose-500/20 text-rose-400'
+                  : 'border-slate-700 bg-surface-card text-slate-300 hover:text-rose-400 hover:border-rose-500/50'
+              }`}
+            >
+              <Heart
+                className={`h-3 w-3 ${
+                  isSavedActive ? 'fill-rose-400' : ''
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div className="flex items-center gap-2 text-slate-200">
+              <MapPin className="h-4 w-4 text-purple-400 shrink-0" />
+              <div>
+                <p className="font-semibold text-white">
+                  {activeEvent.venueName}
+                </p>
+                <p className="text-slate-400">
+                  {activeEvent.cityState} • {activeEvent.distanceMiles} mi away
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-200">
+              <CalendarPlus className="h-4 w-4 text-purple-400 shrink-0" />
+              <div>
+                <p className="font-semibold text-white">
+                  {activeEvent.formattedDate}
+                </p>
+                <p className="text-slate-400">
+                  Doors open 1 hr prior
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              asChild
+              className="bg-purple-600 hover:bg-purple-500 text-white font-semibold h-8 text-xs flex-1"
+            >
+              <a
+                href={activeEvent.seatgeekUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Find Tickets on SeatGeek{' '}
+                <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+              </a>
+            </Button>
+            <a
+              href={getVenueDirectionsUrl(activeEvent)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-colors shrink-0"
+            >
+              <Navigation className="h-3.5 w-3.5 text-teal-400" /> Directions
+            </a>
+            <a
+              href={getGoogleCalendarUrl(activeEvent)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-colors shrink-0"
+            >
+              <CalendarPlus className="h-3.5 w-3.5 text-purple-400" /> Add to Cal
+            </a>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function WaviiDashboard() {
   const [showDevConsole, setShowDevConsole] = useState(false);
   const {
     activeNavTab,
     savedEventIds,
     isFilterMenuOpen,
-    viewMode,
     searchQuery,
     maxPrice,
     distanceMiles,
     selectedCategory,
     weatherSource,
     eventSource,
+    selectedEventId,
     setActiveNavTab,
     setIsFilterMenuOpen,
-    setViewMode,
     setSearchQuery,
     setMaxPrice,
     setDistanceMiles,
@@ -82,238 +256,239 @@ export default function WaviiDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-surface-dark text-slate-50 px-6 py-5 font-sans">
-      <div className="max-w-7xl mx-auto space-y-4">
-        {/* Top Header */}
-        <header className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1
-              style={{ fontFamily: 'var(--font-logo)' }}
-              className="text-3xl tracking-wide bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 bg-clip-text text-transparent py-1"
-            >
-              Wavii.io
-            </h1>
-            <button
-              onClick={() => setShowDevConsole(true)}
-              className="hidden sm:flex items-center gap-2 bg-surface-card/90 border border-border-muted px-2.5 py-1 rounded-full text-[11px] text-slate-300 font-mono hover:ring-1 hover:ring-purple-500/50 cursor-pointer transition-all"
-              title="Open Developer Console"
-            >
-              <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
-              <span>
-                Weather:{' '}
-                <strong className="text-emerald-400 uppercase">
-                  {weatherSource}
-                </strong>
-              </span>
-              <span className="text-slate-600">•</span>
-              <span>
-                Events:{' '}
-                <strong
-                  className={`uppercase ${
-                    eventSource === 'live'
-                      ? 'text-emerald-400'
-                      : 'text-purple-400'
-                  }`}
-                >
-                  {eventSource}
-                </strong>
-              </span>
-            </button>
-          </div>
+    <TooltipProvider delayDuration={120}>
+      <div className="min-h-screen bg-surface-dark text-slate-50 px-6 py-5 font-sans">
+        <main className="flex flex-col w-full max-w-7xl mx-auto space-y-4">
+          {/* Top Header */}
+          <header className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1
+                style={{ fontFamily: 'var(--font-logo)' }}
+                className="text-3xl tracking-wide bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 bg-clip-text text-transparent py-1"
+              >
+                Wavii.io
+              </h1>
+              <button
+                onClick={() => setShowDevConsole(true)}
+                className="hidden sm:flex items-center gap-2 bg-surface-card/90 border border-border-muted px-2.5 py-1 rounded-full text-[11px] text-slate-300 font-mono hover:ring-1 hover:ring-purple-500/50 cursor-pointer transition-all"
+                title="Open Developer Console"
+              >
+                <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
+                <span>
+                  Weather:{' '}
+                  <strong className="text-emerald-400 uppercase">
+                    {weatherSource}
+                  </strong>
+                </span>
+                <span className="text-slate-600">•</span>
+                <span>
+                  Events:{' '}
+                  <strong
+                    className={`uppercase ${
+                      eventSource === 'live'
+                        ? 'text-emerald-400'
+                        : 'text-purple-400'
+                    }`}
+                  >
+                    {eventSource}
+                  </strong>
+                </span>
+              </button>
+            </div>
 
-          <nav className="flex items-center bg-surface-card border border-border-muted rounded-md p-1 space-x-1">
-            {navItems.map((item) => {
-              const isActive = activeNavTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveNavTab(item.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                  }`}
-                >
-                  <span>{item.label}</span>
-                  {item.badge !== undefined && (
-                    <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                        isActive
-                          ? 'bg-purple-900 text-purple-100'
-                          : 'bg-slate-800 text-slate-300'
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </header>
+            <nav className="flex items-center bg-surface-card border border-border-muted rounded-md p-1 space-x-1">
+              {navItems.map((item) => {
+                const isActive = activeNavTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveNavTab(item.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-purple-600 text-white shadow-sm'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    {item.badge !== undefined && (
+                      <span
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                          isActive
+                            ? 'bg-purple-900 text-purple-100'
+                            : 'bg-slate-800 text-slate-300'
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </header>
 
-        {/* Unified Command Bar */}
-        <section className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-            className={`h-9 text-xs transition-colors cursor-pointer ${
-              isFilterMenuOpen
-                ? 'bg-purple-950/60 border-purple-500 text-purple-100'
-                : 'bg-surface-card border-border-muted text-slate-200 hover:bg-slate-800 hover:text-white'
-            }`}
-          >
-            Add filters{' '}
-            <Plus
-              className={`ml-1.5 h-3.5 w-3.5 transition-transform ${
-                isFilterMenuOpen ? 'rotate-45 text-purple-400' : ''
-              }`}
-            />
-          </Button>
-
-          {/* Segmented Map / List Control */}
-          <div className="flex items-center bg-surface-card p-1 rounded-md border border-border-muted h-9">
-            <button
-              onClick={() => setViewMode('map')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
-                viewMode === 'map'
-                  ? 'bg-slate-700 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+          {/* Unified Command Bar */}
+          <section className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+              className={`h-9 text-xs transition-colors cursor-pointer ${
+                isFilterMenuOpen
+                  ? 'bg-purple-950/60 border-purple-500 text-purple-100'
+                  : 'bg-surface-card border-border-muted text-slate-200 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <MapIcon className="h-3.5 w-3.5" /> Map
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
-                viewMode === 'list'
-                  ? 'bg-slate-700 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <ListIcon className="h-3.5 w-3.5" /> List
-            </button>
-          </div>
+              Add filters{' '}
+              <Plus
+                className={`ml-1.5 h-3.5 w-3.5 transition-transform ${
+                  isFilterMenuOpen ? 'rotate-45 text-purple-400' : ''
+                }`}
+              />
+            </Button>
 
-          {/* Search Input */}
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-            <Input
-              placeholder="Enter location, venue, or artist..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-9 bg-surface-card border-border-muted text-slate-100 !text-xs placeholder:text-xs placeholder:text-slate-400 focus-visible:ring-purple-500"
-            />
-          </div>
-
-          {/* Max Price with Embedded '$' Prefix & Clean 'Any' Placeholder */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300 font-medium whitespace-nowrap">
-              Max Price
-            </span>
-            <div className="relative w-24">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400 pointer-events-none">
-                $
-              </span>
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               <Input
-                type="number"
-                min="0"
-                placeholder="Any"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="pl-6 pr-2.5 h-9 bg-surface-card border-border-muted text-slate-100 font-mono !text-xs placeholder:font-sans placeholder:text-xs placeholder:text-slate-500 focus-visible:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                placeholder="Enter location, venue, or artist..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-9 bg-surface-card border-border-muted text-slate-100 !text-xs placeholder:text-xs placeholder:text-slate-400 focus-visible:ring-purple-500"
               />
             </div>
-          </div>
 
-          {/* Distance Select */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300 font-medium">Distance</span>
-            <Select
-              value={String(distanceMiles)}
-              onValueChange={(val) => setDistanceMiles(Number(val))}
-            >
-              <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 !text-xs">
-                <SelectValue placeholder="Distance" />
-              </SelectTrigger>
-              <SelectContent className="bg-surface-card border-border-muted text-slate-200">
-                <SelectItem value="5">5 miles</SelectItem>
-                <SelectItem value="10">10 miles</SelectItem>
-                <SelectItem value="25">25 miles</SelectItem>
-                <SelectItem value="50">50 miles</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Type Select */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300 font-medium">Type</span>
-            <Select
-              value={selectedCategory}
-              onValueChange={(val) =>
-                setSelectedCategory(val as 'all' | EventTaxonomy)
-              }
-            >
-              <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 !text-xs">
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent className="bg-surface-card border-border-muted text-slate-200">
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="concert">Concerts</SelectItem>
-                <SelectItem value="comedy">Comedy</SelectItem>
-                <SelectItem value="theater">Theater</SelectItem>
-                <SelectItem value="sports">Sports</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </section>
-
-        {/* Tokenized Filter Builder & Active Token Pill Bar */}
-        <TokenizedFilterBar />
-
-        {/* Main Viewport: Fixed-Height List View vs Real WebGL Map + Sliding Drawer */}
-        <section className="rounded-xl border border-border-muted bg-surface-card/70 overflow-hidden shadow-2xl">
-          {viewMode === 'list' ? <EventDataTable /> : <EventMapView />}
-        </section>
-
-        {/* 4 Category Shortcut Cards */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {CATEGORIES.map((cat) => {
-            const isActive = selectedCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => toggleCategoryShortcut(cat.id)}
-                className={`group relative h-36 rounded-xl overflow-hidden border transition-all cursor-pointer ${
-                  isActive
-                    ? 'border-purple-500 ring-2 ring-purple-500/40'
-                    : 'border-slate-700 hover:border-slate-500'
-                }`}
-              >
-                <img
-                  src={cat.image}
-                  alt={cat.label}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            {/* Max Price with Embedded '$' Prefix & Clean 'Any' Placeholder */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-300 font-medium whitespace-nowrap">
+                Max Price
+              </span>
+              <div className="relative w-24">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400 pointer-events-none">
+                  $
+                </span>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="Any"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className="pl-6 pr-2.5 h-9 bg-surface-card border-border-muted text-slate-100 font-mono !text-xs placeholder:font-sans placeholder:text-xs placeholder:text-slate-500 focus-visible:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <div className="absolute inset-0 bg-surface-dark/50 group-hover:bg-surface-dark/30 transition-colors" />
-                <div className="relative z-10 flex items-center justify-center h-full">
-                  <span className="text-2xl font-bold text-white tracking-wide drop-shadow-md">
-                    {cat.label}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </section>
+              </div>
+            </div>
 
-        {/* Weather & Event Density Matrix */}
-        <WeatherDensityMatrix />
+            {/* Distance Select */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-300 font-medium">Distance</span>
+              <Select
+                value={String(distanceMiles)}
+                onValueChange={(val) => setDistanceMiles(Number(val))}
+              >
+                <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 !text-xs">
+                  <SelectValue placeholder="Distance" />
+                </SelectTrigger>
+                <SelectContent className="bg-surface-card border-border-muted text-slate-200">
+                  <SelectItem value="5">5 miles</SelectItem>
+                  <SelectItem value="10">10 miles</SelectItem>
+                  <SelectItem value="25">25 miles</SelectItem>
+                  <SelectItem value="50">50 miles</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-        {/* Developer Console Modal */}
-        {showDevConsole && (
-          <DeveloperConsole onClose={() => setShowDevConsole(false)} />
-        )}
+            {/* Type Select */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-300 font-medium">Type</span>
+              <Select
+                value={selectedCategory}
+                onValueChange={(val) =>
+                  setSelectedCategory(val as 'all' | EventTaxonomy)
+                }
+              >
+                <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 !text-xs">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent className="bg-surface-card border-border-muted text-slate-200">
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="concert">Concerts</SelectItem>
+                  <SelectItem value="comedy">Comedy</SelectItem>
+                  <SelectItem value="theater">Theater</SelectItem>
+                  <SelectItem value="sports">Sports</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </section>
+
+          {/* Tokenized Filter Builder & Active Token Pill Bar */}
+          <TokenizedFilterBar />
+
+          {/* Dynamic Table Container */}
+          <motion.div
+            layout
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className={`rounded-xl border border-border-muted bg-surface-card/70 overflow-hidden shadow-2xl ${
+              selectedEventId ? 'max-h-[30vh] overflow-y-auto' : ''
+            }`}
+          >
+            <EventDataTable />
+          </motion.div>
+
+          {/* Bottom Content Area with AnimatePresence */}
+          <AnimatePresence mode="wait">
+            {selectedEventId ? (
+              <EventDetail key="event-detail" />
+            ) : (
+              <motion.div
+                key="discovery-ui"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-4"
+              >
+                {/* 4 Category Shortcut Cards (Split Design) */}
+                <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {CATEGORIES.map((cat) => {
+                    const isActive = selectedCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => toggleCategoryShortcut(cat.id)}
+                        className={`group relative h-40 rounded-xl overflow-hidden border transition-all cursor-pointer flex flex-col ${
+                          isActive
+                            ? 'border-purple-500 ring-2 ring-purple-500/40'
+                            : 'border-slate-700 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="h-[60%] w-full relative overflow-hidden">
+                          <img
+                            src={cat.image}
+                            alt={cat.label}
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                        <div className="h-[40%] w-full bg-slate-900 flex items-center px-4">
+                          <span className="text-sm font-bold text-white tracking-wide">
+                            {cat.label}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </section>
+
+                {/* Weather & Event Density Matrix */}
+                <WeatherDensityMatrix />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Developer Console Modal */}
+          {showDevConsole && (
+            <DeveloperConsole onClose={() => setShowDevConsole(false)} />
+          )}
+        </main>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

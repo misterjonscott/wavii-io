@@ -43,7 +43,7 @@ interface WaviiState {
   selectedCities: string[];
   onlyDryNights: boolean;
   minHypeScore: number;
-  selectedEventId: number;
+  selectedEventId: number | null;
   sortField: SortField;
   sortOrder: SortOrder;
 
@@ -65,7 +65,7 @@ interface WaviiState {
   toggleCityToken: (city: string) => void;
   toggleOnlyDryNights: () => void;
   toggleMinHypeScore: () => void;
-  setSelectedEventId: (id: number) => void;
+  setSelectedEventId: (id: number | null) => void;
   setSorting: (field: SortField) => void;
   resetFilters: () => void;
   hydrateLiveData: () => Promise<void>;
@@ -99,7 +99,7 @@ export const useWaviiStore = create<WaviiState>()(
       drawerMode: 'hot-three',
       spiderfiedCluster: null,
 
-      viewMode: 'map',
+      viewMode: 'list',
       searchQuery: '',
       maxPrice: '',
       distanceMiles: 50,
@@ -109,7 +109,7 @@ export const useWaviiStore = create<WaviiState>()(
       selectedCities: [],
       onlyDryNights: false,
       minHypeScore: 0,
-      selectedEventId: MOCK_EVENTS[0].id,
+      selectedEventId: null,
       sortField: 'popularity',
       sortOrder: 'desc',
 
@@ -285,7 +285,6 @@ export const useWaviiStore = create<WaviiState>()(
               set({
                 events: payload.events,
                 eventSource: payload.source,
-                selectedEventId: payload.events[0].id,
                 detectedCity: bestCity,
                 weatherDensity: mergedWeather,
               });

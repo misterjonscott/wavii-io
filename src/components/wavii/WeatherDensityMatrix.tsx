@@ -47,7 +47,6 @@ export function WeatherDensityMatrix() {
     selectedTags,
     selectedCities,
     minHypeScore,
-    activeNavTab,
     savedEventIds,
     toggleSelectedDay,
     toggleCategoryShortcut,
@@ -56,7 +55,6 @@ export function WeatherDensityMatrix() {
   const parsedMaxPrice = maxPrice.trim() !== '' ? Number(maxPrice) : null;
 
   const baseFilteredEvents = events.filter((evt) => {
-    if (activeNavTab === 'saved' && !savedEventIds.includes(evt.id)) return false;
     if (selectedCategory !== 'all' && evt.taxonomy !== selectedCategory) return false;
     if (evt.distanceMiles > distanceMiles) return false;
     if (parsedMaxPrice !== null && !Number.isNaN(parsedMaxPrice) && evt.estimatedPrice > parsedMaxPrice) return false;
@@ -88,11 +86,11 @@ export function WeatherDensityMatrix() {
     }
   };
 
-  const legendItems: { id: EventTaxonomy; label: string; bg: string }[] = [
-    { id: 'concert', label: 'Concerts', bg: 'bg-purple-500' },
-    { id: 'comedy', label: 'Comedy', bg: 'bg-rose-500' },
-    { id: 'theater', label: 'Theater', bg: 'bg-amber-400' },
-    { id: 'sports', label: 'Sports', bg: 'bg-emerald-500' },
+  const legendItems: { id: EventTaxonomy; label: string; bg: string; color: string }[] = [
+    { id: 'concert', label: 'Concerts', bg: 'bg-fuchsia-500', color: '#d946ef' },
+    { id: 'comedy', label: 'Comedy', bg: 'bg-orange-400', color: '#fb923c' },
+    { id: 'theater', label: 'Theater', bg: 'bg-indigo-500', color: '#6366f1' },
+    { id: 'sports', label: 'Sports', bg: 'bg-teal-400', color: '#2dd4bf' },
   ];
 
   return (
@@ -168,32 +166,48 @@ export function WeatherDensityMatrix() {
                     }`}
                   >
                     <div
-                      style={{ height: `${Math.max(2, concerts * 6)}px` }}
-                      className={`w-full bg-purple-500 transition-all ${
+                      style={{
+                        height: `${Math.max(2, concerts * 6)}px`,
+                        backgroundColor: 'rgba(217, 70, 239, 0.2)',
+                        borderTop: '2px solid #d946ef',
+                      }}
+                      className={`w-full transition-all ${
                         selectedCategory !== 'all' && selectedCategory !== 'concert'
                           ? 'opacity-25'
                           : 'opacity-100'
                       }`}
                     />
                     <div
-                      style={{ height: `${Math.max(2, comedy * 6)}px` }}
-                      className={`w-full bg-rose-500 transition-all ${
+                      style={{
+                        height: `${Math.max(2, comedy * 6)}px`,
+                        backgroundColor: 'rgba(251, 146, 60, 0.2)',
+                        borderTop: '2px solid #fb923c',
+                      }}
+                      className={`w-full transition-all ${
                         selectedCategory !== 'all' && selectedCategory !== 'comedy'
                           ? 'opacity-25'
                           : 'opacity-100'
                       }`}
                     />
                     <div
-                      style={{ height: `${Math.max(2, theater * 6)}px` }}
-                      className={`w-full bg-amber-400 transition-all ${
+                      style={{
+                        height: `${Math.max(2, theater * 6)}px`,
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        borderTop: '2px solid #6366f1',
+                      }}
+                      className={`w-full transition-all ${
                         selectedCategory !== 'all' && selectedCategory !== 'theater'
                           ? 'opacity-25'
                           : 'opacity-100'
                       }`}
                     />
                     <div
-                      style={{ height: `${Math.max(2, sports * 6)}px` }}
-                      className={`w-full bg-emerald-500 transition-all ${
+                      style={{
+                        height: `${Math.max(2, sports * 6)}px`,
+                        backgroundColor: 'rgba(45, 212, 191, 0.2)',
+                        borderTop: '2px solid #2dd4bf',
+                      }}
+                      className={`w-full transition-all ${
                         selectedCategory !== 'all' && selectedCategory !== 'sports'
                           ? 'opacity-25'
                           : 'opacity-100'
@@ -216,25 +230,25 @@ export function WeatherDensityMatrix() {
 
                   {/* Row 2: 2x2 Taxonomy Breakdown (no wrapping) */}
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
-                    <div className="flex items-center justify-between whitespace-nowrap text-purple-300">
+                    <div className="flex items-center justify-between whitespace-nowrap text-fuchsia-300">
                       <span>Concerts:</span>
                       <span className="font-mono font-semibold ml-1.5">
                         <AnimatedCount value={concerts} />
                       </span>
                     </div>
-                    <div className="flex items-center justify-between whitespace-nowrap text-rose-300">
+                    <div className="flex items-center justify-between whitespace-nowrap text-orange-300">
                       <span>Comedy:</span>
                       <span className="font-mono font-semibold ml-1.5">
                         <AnimatedCount value={comedy} />
                       </span>
                     </div>
-                    <div className="flex items-center justify-between whitespace-nowrap text-amber-300">
+                    <div className="flex items-center justify-between whitespace-nowrap text-indigo-300">
                       <span>Theater:</span>
                       <span className="font-mono font-semibold ml-1.5">
                         <AnimatedCount value={theater} />
                       </span>
                     </div>
-                    <div className="flex items-center justify-between whitespace-nowrap text-emerald-300">
+                    <div className="flex items-center justify-between whitespace-nowrap text-teal-300">
                       <span>Sports:</span>
                       <span className="font-mono font-semibold ml-1.5">
                         <AnimatedCount value={sports} />
