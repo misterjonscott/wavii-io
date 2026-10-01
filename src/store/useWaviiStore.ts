@@ -13,7 +13,7 @@ import {
 import { MOCK_EVENTS, MOCK_WEATHER_DENSITY } from '@/data/mockData';
 import { mergeLiveWeatherWithDensity } from '@/lib/adapters';
 
-export type NavTab = 'explore' | 'trending' | 'saved';
+export type NavTab = 'explore' | 'saved';
 
 interface WaviiState {
   events: WaviiEvent[];
@@ -29,6 +29,8 @@ interface WaviiState {
   activeNavTab: NavTab;
   savedEventIds: number[];
   isFilterMenuOpen: boolean;
+  drawerMode: 'hot-three' | 'detail';
+  spiderfiedCluster: { clusterId: number; leaves: WaviiEvent[]; coordinates: [number, number] } | null;
 
   // Filter Facets (All rendered as removable tokens when active)
   viewMode: ViewMode;
@@ -49,6 +51,9 @@ interface WaviiState {
   setActiveNavTab: (tab: NavTab) => void;
   toggleSaveEvent: (id: number) => void;
   setIsFilterMenuOpen: (open: boolean) => void;
+  setDrawerMode: (mode: 'hot-three' | 'detail') => void;
+  setSpiderfiedCluster: (cluster: { clusterId: number; leaves: WaviiEvent[]; coordinates: [number, number] } | null) => void;
+  clearSpiderfiedCluster: () => void;
   setViewMode: (mode: ViewMode) => void;
   setSearchQuery: (query: string) => void;
   setMaxPrice: (price: string) => void;
@@ -91,6 +96,8 @@ export const useWaviiStore = create<WaviiState>()(
       activeNavTab: 'explore',
       savedEventIds: [],
       isFilterMenuOpen: false,
+      drawerMode: 'hot-three',
+      spiderfiedCluster: null,
 
       viewMode: 'map',
       searchQuery: '',
@@ -106,18 +113,7 @@ export const useWaviiStore = create<WaviiState>()(
       sortField: 'popularity',
       sortOrder: 'desc',
 
-      setActiveNavTab: (tab) =>
-        set(() => {
-          if (tab === 'trending') {
-            return {
-              activeNavTab: tab,
-              distanceMiles: 50,
-              sortField: 'popularity',
-              sortOrder: 'desc',
-            };
-          }
-          return { activeNavTab: tab };
-        }),
+      setActiveNavTab: (tab) => set({ activeNavTab: tab }),
 
       toggleSaveEvent: (id) =>
         set((state) => ({
@@ -127,6 +123,9 @@ export const useWaviiStore = create<WaviiState>()(
         })),
 
       setIsFilterMenuOpen: (isFilterMenuOpen) => set({ isFilterMenuOpen }),
+      setDrawerMode: (drawerMode) => set({ drawerMode }),
+      setSpiderfiedCluster: (spiderfiedCluster) => set({ spiderfiedCluster }),
+      clearSpiderfiedCluster: () => set({ spiderfiedCluster: null }),
       setViewMode: (viewMode) => set({ viewMode }),
       setSearchQuery: (searchQuery) => set({ searchQuery }),
       setMaxPrice: (maxPrice) => set({ maxPrice }),
@@ -277,7 +276,6 @@ export const useWaviiStore = create<WaviiState>()(
 
               const mergedWeather = get().weatherSource === 'live'
                 ? mergeLiveWeatherWithDensity(
-                    // We can re-merge or store rawWeather, but let's re-merge with payload.events
                     { daily: { time: get().weatherDensity.map(d => d.dateIso), weather_code: [], temperature_2m_max: get().weatherDensity.map(d => d.highTemp), temperature_2m_min: get().weatherDensity.map(d => d.lowTemp), precipitation_probability_max: get().weatherDensity.map(d => d.precipChance), sunset: get().weatherDensity.map(d => d.sunsetTime || '') } },
                     payload.events,
                     rawAirQuality
@@ -327,9 +325,6 @@ export function useFilteredEvents(): WaviiEvent[] {
   return events
     .filter((evt) => {
       if (activeNavTab === 'saved' && !savedEventIds.includes(evt.id)) {
-        return false;
-      }
-      if (activeNavTab === 'trending' && evt.popularityScore < 80) {
         return false;
       }
       if (selectedCategory !== 'all' && evt.taxonomy !== selectedCategory) {

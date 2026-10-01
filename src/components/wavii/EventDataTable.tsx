@@ -42,6 +42,7 @@ export function EventDataTable() {
     weatherDensity,
     setSorting,
     setSelectedEventId,
+    setDrawerMode,
     setViewMode,
     toggleSaveEvent,
     toggleTagToken,
@@ -112,6 +113,15 @@ export function EventDataTable() {
                 </TableHead>
 
                 <TableHead className="text-slate-300 font-semibold text-xs">
+                  <button
+                    onClick={() => setSorting('popularity')}
+                    className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
+                  >
+                    Hype {renderSortIcon('popularity')}
+                  </button>
+                </TableHead>
+
+                <TableHead className="text-slate-300 font-semibold text-xs">
                   Tags
                 </TableHead>
 
@@ -138,9 +148,7 @@ export function EventDataTable() {
                       key={event.id}
                       onClick={() => {
                         setSelectedEventId(event.id);
-                      }}
-                      onDoubleClick={() => {
-                        setSelectedEventId(event.id);
+                        setDrawerMode('detail');
                         setViewMode('map');
                       }}
                       className={`h-11 border-border-muted/80 transition-colors cursor-pointer text-xs ${
@@ -159,7 +167,7 @@ export function EventDataTable() {
                             <img
                               src={event.imageUrl}
                               alt={event.title}
-                              className="h-8 w-11 rounded object-cover border border-slate-700"
+                              className="h-8 w-8 rounded-full object-cover border border-slate-700"
                             />
                             {event.imageAttribution && (
                               <Tooltip>
@@ -198,6 +206,10 @@ export function EventDataTable() {
                         {event.formattedDate}
                       </TableCell>
 
+                      <TableCell className="text-purple-400 font-mono text-xs">
+                        {event.popularityScore}/100
+                      </TableCell>
+
                       <TableCell>
                         <div className="flex flex-wrap gap-1.5">
                           {event.tags.map((tag) => {
@@ -223,16 +235,16 @@ export function EventDataTable() {
                               </Badge>
                             );
                           })}
-                          {getEnvironmentalTags(event, weatherDensity).map(
-                            (badge) => (
+                          {getEnvironmentalTags(event, weatherDensity)
+                            .filter((badge) => badge.type !== 'aqi')
+                            .map((badge) => (
                               <span
                                 key={badge.type}
                                 className={`px-2 py-0.5 text-[10px] rounded border ${badge.colorClass} font-medium`}
                               >
                                 {badge.label}
                               </span>
-                            )
-                          )}
+                            ))}
                         </div>
                       </TableCell>
 
@@ -322,7 +334,6 @@ export function EventDataTable() {
             Showing <strong className="text-slate-200">{filteredEvents.length}</strong>{' '}
             {filteredEvents.length === 1 ? 'event' : 'events'}
           </span>
-          <span>Double-click any row to inspect on Map</span>
         </div>
       </div>
     </TooltipProvider>

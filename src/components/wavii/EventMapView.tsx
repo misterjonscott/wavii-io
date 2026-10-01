@@ -1,33 +1,30 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import Map, { Marker, MapRef } from 'react-map-gl/maplibre';
+import React, { useRef, useState, useEffect } from 'react';
+import Map, { MapRef, Marker } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import useSupercluster from 'use-supercluster';
+import { motion } from 'framer-motion';
 import {
-  Navigation,
-  CalendarPlus,
-  ZoomIn,
-  ZoomOut,
-  Compass,
-  ExternalLink,
-  ArrowLeft,
-  MapPin,
   Sparkles,
   Sun,
   Cloud,
   CloudRain,
   Snowflake,
-  Droplets,
   Heart,
+  Navigation,
+  CalendarPlus,
+  ExternalLink,
+  ZoomIn,
+  ZoomOut,
+  Compass,
+  MapPin,
+  Droplets,
+  ArrowLeft,
 } from 'lucide-react';
 import { useWaviiStore, useFilteredEvents } from '@/store/useWaviiStore';
 import { WaviiEvent } from '@/types/wavii';
 import { TAXONOMY_STYLES } from '@/data/mockData';
-import {
-  getVenueDirectionsUrl,
-  getGoogleCalendarUrl,
-} from '@/lib/eventActions';
 import { getEnvironmentalTags } from '@/lib/adapters';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,9 +36,24 @@ import {
 
 const INDY_DEFAULT_VIEW = {
   longitude: -86.1581,
-  latitude: 39.82,
+  latitude: 39.7684,
   zoom: 9.8,
 };
+
+function getGoogleCalendarUrl(event: WaviiEvent): string {
+  const title = encodeURIComponent(event.title);
+  const location = encodeURIComponent(`${event.venueName}, ${event.cityState}`);
+  const details = encodeURIComponent(`Find tickets and details on Wavii.io: ${event.seatgeekUrl}`);
+  const start = event.datetimeLocal.replace(/[-:]/g, '');
+  const endDt = new Date(new Date(event.datetimeLocal).getTime() + 3 * 3600 * 1000);
+  const end = endDt.toISOString().replace(/[-:]/g, '');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&location=${location}&details=${details}`;
+}
+
+function getVenueDirectionsUrl(event: WaviiEvent): string {
+  const dest = encodeURIComponent(`${event.venueName} ${event.cityState}`);
+  return `https://www.google.com/maps/search/?api=1&query=${dest}`;
+}
 
 export function EventMapView() {
   const mapRef = useRef<MapRef | null>(null);
@@ -50,6 +62,11 @@ export function EventMapView() {
     weatherDensity,
     selectedEventId,
     setSelectedEventId,
+    drawerMode,
+    setDrawerMode,
+    spiderfiedCluster,
+    setSpiderfiedCluster,
+    clearSpiderfiedCluster,
     distanceMiles,
     savedEventIds,
     toggleSaveEvent,
@@ -59,9 +76,6 @@ export function EventMapView() {
   } = useWaviiStore();
 
   const filteredEvents = useFilteredEvents();
-  const [drawerMode, setDrawerMode] = useState<'hot-three' | 'detail'>(
-    'hot-three'
-  );
 
   const [zoom, setZoom] = useState(INDY_DEFAULT_VIEW.zoom);
   const [bounds, setBounds] = useState<[number, number, number, number]>([
@@ -85,9 +99,7 @@ export function EventMapView() {
     return () => clearTimeout(timer);
   }, []);
 
-  const points = filteredEvents.map((event, index) => {
-    const jitterLon = event.lon + (index % 2 === 0 ? 1 : -1) * (index * 0.0001);
-    const jitterLat = event.lat + (index % 3 === 0 ? 1 : -1) * (index * 0.0001);
+  const points = filteredEvents.map((event) => {
     return {
       type: 'Feature' as const,
       properties: {
@@ -97,7 +109,7 @@ export function EventMapView() {
       },
       geometry: {
         type: 'Point' as const,
-        coordinates: [jitterLon, jitterLat],
+        coordinates: [event.lon, event.lat],
       },
     };
   });
@@ -114,35 +126,21 @@ export function EventMapView() {
     filteredEvents[0] ||
     events[0];
 
-  const baseTopThree = filteredEvents.slice(0, 3);
-
-  const isInBaseTopThree = baseTopThree.some((e) => e.id === activeEvent?.id);
-  const displayedThreeEvents: WaviiEvent[] =
-    isInBaseTopThree || !activeEvent
-      ? baseTopThree
-      : [...baseTopThree.slice(0, 2), activeEvent];
-
   // Smoothly fly the WebGL camera whenever the active event changes
   useEffect(() => {
     if (activeEvent && mapRef.current) {
       mapRef.current.flyTo({
         center: [activeEvent.lon, activeEvent.lat],
-        zoom: Math.max(mapRef.current.getZoom(), 11.2),
+        zoom: 14,
         duration: 900,
         essential: true,
       });
     }
-  }, [activeEvent]);
+  }, [selectedEventId, activeEvent]);
 
   const handleMarkerClick = (event: WaviiEvent) => {
-    const wasAlreadySelected = event.id === activeEvent?.id;
-    const isOneOfBaseTopThree = baseTopThree.some((e) => e.id === event.id);
-
     setSelectedEventId(event.id);
-
-    if (!isOneOfBaseTopThree || wasAlreadySelected) {
-      setDrawerMode('detail');
-    }
+    setDrawerMode('detail');
   };
 
   const activeDayPrefix = activeEvent?.formattedDate.slice(0, 3).toLowerCase();
@@ -168,7 +166,10 @@ export function EventMapView() {
 
   return (
     <TooltipProvider delayDuration={120}>
-      <div className="grid grid-cols-1 lg:grid-cols-12 h-[440px]">
+      <div
+        className="grid grid-cols-1 lg:grid-cols-12 h-[440px]"
+        onClick={() => clearSpiderfiedCluster()}
+      >
         {/* Left 7 Columns: Real 60fps WebGL Dark-Mode Street Map */}
         <div className="lg:col-span-7 relative bg-surface-dark overflow-hidden border-b lg:border-b-0 lg:border-r border-border-muted h-full">
           <Map
@@ -189,35 +190,96 @@ export function EventMapView() {
               const { cluster: isCluster, point_count: pointCount } = cluster.properties;
 
               if (isCluster) {
+                const isSpiderfied = spiderfiedCluster?.clusterId === cluster.id;
                 return (
-                  <Marker
-                    key={`cluster-${cluster.id}`}
-                    longitude={longitude}
-                    latitude={latitude}
-                    anchor="center"
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (supercluster) {
-                          const expansionZoom = Math.min(
-                            supercluster.getClusterExpansionZoom(cluster.id),
-                            20
-                          );
-                          mapRef.current?.flyTo({
-                            center: [longitude, latitude],
-                            zoom: expansionZoom,
-                            duration: 600,
-                            essential: true,
-                          });
-                        }
-                      }}
-                      className="px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-purple-600 text-white border-2 border-teal-300 shadow-xl shadow-purple-500/40 hover:scale-110 transition-transform cursor-pointer flex items-center gap-1.5"
+                  <React.Fragment key={`cluster-group-${cluster.id}`}>
+                    <Marker
+                      longitude={longitude}
+                      latitude={latitude}
+                      anchor="center"
                     >
-                      <Sparkles className="h-3 w-3 text-teal-300" />
-                      <span>{pointCount} Events</span>
-                    </button>
-                  </Marker>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (supercluster) {
+                            const expansionZoom = supercluster.getClusterExpansionZoom(cluster.id);
+                            const maxZoom = 20;
+                            if (zoom >= maxZoom || expansionZoom >= maxZoom || expansionZoom > 18) {
+                              const leaves = supercluster.getLeaves(cluster.id, Infinity);
+                              const leavesEvents = leaves.map(
+                                (l) => l.properties.event as WaviiEvent
+                              );
+                              setSpiderfiedCluster({
+                                clusterId: cluster.id,
+                                leaves: leavesEvents,
+                                coordinates: [longitude, latitude],
+                              });
+                            } else {
+                              clearSpiderfiedCluster();
+                              mapRef.current?.flyTo({
+                                center: [longitude, latitude],
+                                zoom: Math.min(expansionZoom, maxZoom),
+                                duration: 600,
+                                essential: true,
+                              });
+                            }
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-purple-600 text-white border-2 border-teal-300 shadow-xl shadow-purple-500/40 hover:scale-110 transition-transform cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Sparkles className="h-3 w-3 text-teal-300" />
+                        <span>{pointCount} Events</span>
+                      </button>
+                    </Marker>
+
+                    {isSpiderfied &&
+                      spiderfiedCluster &&
+                      spiderfiedCluster.leaves.map((event, index, arr) => {
+                        const angle = (index / arr.length) * 2 * Math.PI;
+                        const radius = 110;
+                        const isSelected = event.id === activeEvent?.id;
+
+                        return (
+                          <Marker
+                            key={`spider-${event.id}`}
+                            longitude={longitude}
+                            latitude={latitude}
+                            anchor="bottom"
+                          >
+                            <motion.div
+                              initial={{ opacity: 0, x: 0, y: 0 }}
+                              animate={{
+                                opacity: 1,
+                                x: Math.cos(angle) * radius,
+                                y: Math.sin(angle) * radius,
+                              }}
+                              transition={{ duration: 0.3, ease: 'easeOut' }}
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMarkerClick(event);
+                                }}
+                                className={`group flex flex-col items-center transition-transform duration-200 cursor-pointer ${
+                                  isSelected ? 'scale-110' : 'hover:scale-105'
+                                }`}
+                              >
+                                <div
+                                  className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-medium whitespace-nowrap transition-all shadow-xl max-w-[180px] truncate ${
+                                    isSelected
+                                      ? 'bg-purple-600 text-white border-2 border-teal-300 shadow-purple-500/40'
+                                      : 'bg-surface-card/95 text-teal-300 border border-teal-500/60 hover:bg-teal-950 hover:text-white hover:border-teal-300'
+                                  }`}
+                                >
+                                  {event.title}
+                                </div>
+                                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-teal-500/60" />
+                              </button>
+                            </motion.div>
+                          </Marker>
+                        );
+                      })}
+                  </React.Fragment>
                 );
               }
 
@@ -315,15 +377,15 @@ export function EventMapView() {
               drawerMode === 'detail' ? '-translate-x-1/2' : 'translate-x-0'
             }`}
           >
-            {/* Panel 1 (Left Half of Track): Trending Events List */}
+            {/* Panel 1 (Left Half of Track): Filtered Events List */}
             <div className="w-1/2 p-5 flex flex-col justify-between shrink-0 overflow-y-auto">
               <div className="space-y-3.5">
                 <div className="flex flex-col items-center text-center space-y-0.5 pb-1 border-b border-border-muted">
                   <h2 className="text-xl font-bold tracking-tight text-white">
-                    Trending Events
+                    Explore Events
                   </h2>
                   <p className="text-[11px] text-slate-400 font-normal">
-                    Highest local hype and ticket demand.
+                    Matching active filters and radius.
                   </p>
                 </div>
 
@@ -338,12 +400,10 @@ export function EventMapView() {
                       </p>
                     </div>
                   ) : (
-                    displayedThreeEvents.map((event) => {
+                    filteredEvents.map((event) => {
                       const isSelected = event.id === activeEvent?.id;
                       const isSaved = savedEventIds.includes(event.id);
                       const style = TAXONOMY_STYLES[event.taxonomy];
-                      const isPinnedFromMap =
-                        !isInBaseTopThree && event.id === activeEvent?.id;
 
                       return (
                         <div
@@ -498,11 +558,6 @@ export function EventMapView() {
                                     {badge.label}
                                   </span>
                                 ))}
-                                {isPinnedFromMap && (
-                                  <span className="px-1.5 py-0.5 text-[9px] rounded bg-teal-500/30 border border-teal-300/50 text-teal-100 font-mono">
-                                    Pinned
-                                  </span>
-                                )}
                               </div>
                               <button
                                 onClick={(e) => {
@@ -537,7 +592,7 @@ export function EventMapView() {
                       onClick={() => setDrawerMode('hot-three')}
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer"
                     >
-                      <ArrowLeft className="h-3.5 w-3.5" /> Back to Trending Events
+                      <ArrowLeft className="h-3.5 w-3.5" /> Back to Explore Events
                     </button>
                     <span className="inline-flex items-center gap-1 text-xs font-mono text-purple-400">
                       <Sparkles className="h-3.5 w-3.5" /> Hype Score:{' '}

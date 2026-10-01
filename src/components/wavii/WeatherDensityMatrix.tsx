@@ -57,7 +57,6 @@ export function WeatherDensityMatrix() {
 
   const baseFilteredEvents = events.filter((evt) => {
     if (activeNavTab === 'saved' && !savedEventIds.includes(evt.id)) return false;
-    if (activeNavTab === 'trending' && evt.popularityScore < 80) return false;
     if (selectedCategory !== 'all' && evt.taxonomy !== selectedCategory) return false;
     if (evt.distanceMiles > distanceMiles) return false;
     if (parsedMaxPrice !== null && !Number.isNaN(parsedMaxPrice) && evt.estimatedPrice > parsedMaxPrice) return false;

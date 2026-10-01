@@ -78,7 +78,6 @@ export default function WaviiDashboard() {
 
   const navItems: { id: NavTab; label: string; badge?: number }[] = [
     { id: 'explore', label: 'Explore' },
-    { id: 'trending', label: 'Trending' },
     { id: 'saved', label: 'Saved', badge: savedEventIds.length },
   ];
 

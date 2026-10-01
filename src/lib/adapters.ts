@@ -7,6 +7,47 @@ import {
   WaviiEvent,
 } from '@/types/wavii';
 
+const ALL_CAPS_ACRONYMS = [
+  'nba',
+  'ncaa',
+  'nfl',
+  'mlb',
+  'nhl',
+  'mls',
+  'wnba',
+  'ufc',
+  'wwe',
+  'pga',
+  'lpga',
+  'nascar',
+  'f1',
+  'atp',
+  'wta',
+  'edm',
+  'dj',
+];
+
+const SPECIAL_CASES: Record<string, string> = {
+  rnb: 'RnB',
+};
+
+function formatTag(t: string): string {
+  if (!t) return '';
+  return t
+    .split(/\s+/)
+    .map((word) => {
+      const lower = word.toLowerCase();
+      if (SPECIAL_CASES[lower]) {
+        return SPECIAL_CASES[lower];
+      }
+      if (ALL_CAPS_ACRONYMS.includes(lower)) {
+        return word.toUpperCase();
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
 const DAY_NAMES = [
   'Sunday',
   'Monday',
@@ -261,15 +302,16 @@ export function normalizeSeatGeekEvents(
     }
     usedImageUrls.add(resolvedImage);
 
-    const rawGenre =
+    const rawGenre = formatTag(
       primaryPerformer?.genres?.[0]?.name ||
       raw.type
         .split('_')
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-    const categoryLabel = taxonomy.charAt(0).toUpperCase() + taxonomy.slice(1);
+        .join(' ')
+    );
+    const categoryLabel = formatTag(taxonomy.charAt(0).toUpperCase() + taxonomy.slice(1));
 
-    const tags = Array.from(new Set([rawGenre, categoryLabel]));
+    const tags = Array.from(new Set([rawGenre, categoryLabel])).map(formatTag);
 
     const popularityScore = Math.max(
       65,
