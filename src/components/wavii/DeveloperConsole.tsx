@@ -13,6 +13,7 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
 
   const {
     events,
+    selectedEventId,
     activeNavTab,
     distanceMiles,
     selectedCategory,
@@ -41,9 +42,57 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
     eventSource,
     weatherSource,
     totalEventsLoaded: events.length,
+    selectedEventId,
   };
 
-  const rawSeatGeekMock = {
+  const selectedEvent = events.find((e) => e.id === selectedEventId) || events[0] || {
+    id: 18354358,
+    title: "Ceci Bastida",
+    venueName: "The Vogue",
+    cityState: "Indianapolis, IN",
+    datetimeLocal: "2026-10-12T20:00:00",
+    formattedDate: "Mon, Oct 12 • 8:00 PM",
+    taxonomy: "concert",
+    tags: ["Latin Alternative", "Concert"],
+    imageUrl: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=600&q=80",
+    imageAttribution: "Photo via Unsplash / CC0",
+    seatgeekUrl: "https://seatgeek.com",
+    lat: 39.8532,
+    lon: -86.1384,
+    estimatedPrice: 35,
+    distanceMiles: 4.2,
+    popularityScore: 84,
+    isHotThree: true
+  };
+
+  const targetId = selectedEvent.id;
+
+  const rawSeatGeekPool = events.length > 0 ? events.map((e) => ({
+    id: e.id,
+    title: `${e.title} at ${e.venueName}`,
+    short_title: e.title,
+    datetime_local: e.datetimeLocal,
+    type: e.taxonomy,
+    taxonomies: [{ id: 1000000, name: e.taxonomy }],
+    venue: {
+      id: 3371,
+      name: e.venueName,
+      display_location: e.cityState,
+      location: { lat: e.lat, lon: e.lon },
+    },
+    performers: [
+      {
+        id: 4219,
+        name: e.title,
+        image: e.imageUrl,
+        image_rights_message: e.imageAttribution || 'Photo via Unsplash / CC0',
+        genres: e.tags.map((t) => ({ name: t })),
+      },
+    ],
+    stats: { lowest_price: e.estimatedPrice, average_price: e.estimatedPrice + 30, listing_count: 10 },
+    score: e.popularityScore / 100,
+    url: e.seatgeekUrl,
+  })) : [{
     id: 18354358,
     title: "Ceci Bastida at The Vogue",
     short_title: "Ceci Bastida",
@@ -71,27 +120,10 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
     stats: { lowest_price: 35, average_price: 65, listing_count: 12 },
     score: 0.84,
     url: "https://seatgeek.com/ceci-bastida-tickets/indy/2026-10-12/18354358"
-  };
+  }];
 
-  const sanitizedEvent = events[0] || {
-    id: 18354358,
-    title: "Ceci Bastida",
-    venueName: "The Vogue",
-    cityState: "Indianapolis, IN",
-    datetimeLocal: "2026-10-12T20:00:00",
-    formattedDate: "Mon, Oct 12 • 8:00 PM",
-    taxonomy: "concert",
-    tags: ["Latin Alternative", "Concert"],
-    imageUrl: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=600&q=80",
-    imageAttribution: "Photo via Unsplash / CC0",
-    seatgeekUrl: "https://seatgeek.com",
-    lat: 39.8532,
-    lon: -86.1384,
-    estimatedPrice: 35,
-    distanceMiles: 4.2,
-    popularityScore: 84,
-    isHotThree: true
-  };
+  const rawSeatGeekMock = rawSeatGeekPool.find((r) => r.id === targetId) || rawSeatGeekPool[0];
+  const sanitizedEvent = selectedEvent;
 
   const astExtractedTypeSpecs = {
     source: "src/types/wavii.ts",

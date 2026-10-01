@@ -41,7 +41,6 @@ Zustand controls all global state.
 
 ### Component: `EventMapView.tsx`
 - **WebGL Map:** Uses MapLibre GL for 60fps rendering. Pinned to `v5.0.0` to avoid Next.js App Router Web Worker compilation bugs.
-- **Hardware-Accelerated Drawer:** The "Hot Three" / "Detail" panels sit side-by-side inside a `w-[200%]` track. Toggling the view applies a `translate-x` with a `cubic-bezier` easing function for a physical sliding effect without unmounting DOM nodes.
 - **Camera Sync:** Clicking a map pin or list item triggers a WebGL `flyTo` camera animation.
 
 ### Component: `TokenizedFilterBar.tsx`

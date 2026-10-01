@@ -68,15 +68,15 @@ export function EventDataTable() {
     <TooltipProvider delayDuration={150}>
       <div className="h-[440px] flex flex-col bg-surface-card/40">
         {/* Scrollable Table Viewport with Sticky Header */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto dark-scrollbar">
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-surface-card/95 backdrop-blur border-b border-border-muted">
+            <TableHeader className="bg-[#0f172a] border-b border-border-muted shadow-sm">
               <TableRow className="border-border-muted hover:bg-transparent">
-                <TableHead className="w-12 text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-[#0f172a] w-12 text-slate-300 font-semibold text-xs">
                   #
                 </TableHead>
 
-                <TableHead className="text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('title')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -85,7 +85,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('venue')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -94,7 +94,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('city')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -103,7 +103,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('date')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -112,7 +112,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('popularity')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -121,11 +121,11 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
                   Tags
                 </TableHead>
 
-                <TableHead className="text-right text-slate-300 font-semibold text-xs w-28">
+                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-right text-slate-300 font-semibold text-xs w-28">
                   <button
                     onClick={() => setSorting('price')}
                     className="group inline-flex items-center justify-end hover:text-white transition-colors ml-auto cursor-pointer"
@@ -236,7 +236,7 @@ export function EventDataTable() {
                             );
                           })}
                           {getEnvironmentalTags(event, weatherDensity)
-                            .filter((badge) => badge.type !== 'aqi')
+                            .filter((badge) => badge.type !== 'aqi' && badge.type !== 'sunset')
                             .map((badge) => (
                               <span
                                 key={badge.type}
