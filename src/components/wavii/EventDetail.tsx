@@ -34,8 +34,16 @@ function getVenueDirectionsUrl(event: WaviiEvent): string {
 }
 
 export function EventDetail() {
-  const { events, selectedEventId, setSelectedEventId, savedEventIds, toggleSaveEvent, weatherDensity } = useWaviiStore();
+  const { events, selectedEventId, setSelectedEventId, savedEventIds, toggleSaveEvent, weatherDensity, isPlannerOpen, plannerTab, setPlannerOpen, setPlannerTab } = useWaviiStore();
   const activeEvent = events.find((e) => e.id === selectedEventId);
+
+  const plannerRef = React.useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (isPlannerOpen && plannerRef.current) {
+      plannerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [isPlannerOpen, plannerTab]);
 
   const [weatherData, setWeatherData] = useState<{
     tempMax: number;
@@ -224,14 +232,20 @@ export function EventDetail() {
               <Button
                 variant="outline"
                 className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm"
-                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('parking near ' + activeEvent.venueName + ' ' + activeEvent.cityState)}`, '_blank')}
+                onClick={() => {
+                  setPlannerOpen(true);
+                  setPlannerTab('parking');
+                }}
               >
                 <Car className="mr-2 h-4 w-4 text-purple-400" /> Find Parking
               </Button>
               <Button
                 variant="outline"
                 className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm"
-                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('restaurants bars near ' + activeEvent.venueName + ' ' + activeEvent.cityState)}`, '_blank')}
+                onClick={() => {
+                  setPlannerOpen(true);
+                  setPlannerTab('dining');
+                }}
               >
                 <Utensils className="mr-2 h-4 w-4 text-teal-400" /> Food & Drink
               </Button>
@@ -304,6 +318,60 @@ export function EventDetail() {
           </div>
         </div>
       </div>
+
+      {/* Planner Container */}
+      {isPlannerOpen && (
+        <div ref={plannerRef} className="w-full mt-8 pt-8 border-t border-slate-800">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              {plannerTab === 'parking' ? <Car className="h-5 w-5 text-purple-400" /> : <Utensils className="h-5 w-5 text-teal-400" />}
+              {plannerTab === 'parking' ? 'Find Parking Passes' : 'Food & Drink Near Venue'}
+            </h2>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant={plannerTab === 'parking' ? 'default' : 'outline'}
+                onClick={() => setPlannerTab('parking')}
+                className={plannerTab === 'parking' ? 'bg-purple-600 text-white' : 'border-slate-700 text-slate-300'}
+              >
+                Parking
+              </Button>
+              <Button
+                size="sm"
+                variant={plannerTab === 'dining' ? 'default' : 'outline'}
+                onClick={() => setPlannerTab('dining')}
+                className={plannerTab === 'dining' ? 'bg-purple-600 text-white' : 'border-slate-700 text-slate-300'}
+              >
+                Dining
+              </Button>
+            </div>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 text-center text-slate-400">
+            <p className="text-sm font-medium">
+              {plannerTab === 'parking'
+                ? `Showing verified parking options near ${activeEvent.venueName}...`
+                : `Showing top-rated restaurants and bars near ${activeEvent.venueName}...`}
+            </p>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg border border-slate-800 bg-slate-900 text-left">
+                <div className="h-3 w-24 bg-slate-800 rounded mb-2 animate-pulse" />
+                <div className="h-6 w-32 bg-slate-800 rounded mb-3 animate-pulse" />
+                <div className="h-4 w-full bg-slate-800/60 rounded animate-pulse" />
+              </div>
+              <div className="p-4 rounded-lg border border-slate-800 bg-slate-900 text-left">
+                <div className="h-3 w-24 bg-slate-800 rounded mb-2 animate-pulse" />
+                <div className="h-6 w-32 bg-slate-800 rounded mb-3 animate-pulse" />
+                <div className="h-4 w-full bg-slate-800/60 rounded animate-pulse" />
+              </div>
+              <div className="p-4 rounded-lg border border-slate-800 bg-slate-900 text-left">
+                <div className="h-3 w-24 bg-slate-800 rounded mb-2 animate-pulse" />
+                <div className="h-6 w-32 bg-slate-800 rounded mb-3 animate-pulse" />
+                <div className="h-4 w-full bg-slate-800/60 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

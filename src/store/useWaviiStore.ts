@@ -46,6 +46,9 @@ interface WaviiState {
   selectedEventId: number | null;
   sortField: SortField;
   sortOrder: SortOrder;
+  isPlannerOpen: boolean;
+  plannerTab: 'parking' | 'dining';
+  parkingOptions: WaviiEvent[];
 
   // Actions
   setActiveNavTab: (tab: NavTab) => void;
@@ -69,6 +72,8 @@ interface WaviiState {
   setSorting: (field: SortField) => void;
   resetFilters: () => void;
   hydrateLiveData: () => Promise<void>;
+  setPlannerOpen: (isOpen: boolean) => void;
+  setPlannerTab: (tab: 'parking' | 'dining') => void;
 }
 
 export const BLANK_WEATHER_DENSITY: DailyWeatherAndDensity[] = [
@@ -112,6 +117,9 @@ export const useWaviiStore = create<WaviiState>()(
       selectedEventId: null,
       sortField: 'popularity',
       sortOrder: 'desc',
+      isPlannerOpen: false,
+      plannerTab: 'parking',
+      parkingOptions: [],
 
       setActiveNavTab: (tab) => set({ activeNavTab: tab }),
 
@@ -165,7 +173,14 @@ export const useWaviiStore = create<WaviiState>()(
           minHypeScore: state.minHypeScore === 85 ? 0 : 85,
         })),
 
-      setSelectedEventId: (selectedEventId) => set({ selectedEventId }),
+      setSelectedEventId: (selectedEventId) =>
+        set({
+          selectedEventId,
+          ...(selectedEventId === null ? { isPlannerOpen: false } : {}),
+        }),
+
+      setPlannerOpen: (isPlannerOpen) => set({ isPlannerOpen }),
+      setPlannerTab: (plannerTab) => set({ plannerTab }),
 
       setSorting: (field) =>
         set((state) => ({
