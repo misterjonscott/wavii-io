@@ -8,6 +8,8 @@ import {
   Navigation,
   ExternalLink,
   Heart,
+  Car,
+  Utensils,
 } from 'lucide-react';
 import { useWaviiStore } from '@/store/useWaviiStore';
 import { WaviiEvent } from '@/types/wavii';
@@ -117,7 +119,7 @@ export function EventDetail() {
       {/* 3-Column CSS Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full">
         {/* Left Column (Visuals - col-span-4) */}
-        <div className="aspect-square md:col-span-4 relative h-64 md:h-full min-h-[220px] rounded-lg overflow-hidden border border-border-muted">
+        <div className="w-full aspect-square md:h-full md:col-span-4 relative rounded-lg overflow-hidden border border-border-muted">
           <img
             src={activeEvent.imageUrl}
             alt={activeEvent.title}
@@ -216,6 +218,24 @@ export function EventDetail() {
                 Find Tickets on SeatGeek <ExternalLink className="ml-2 h-4 w-4" />
               </a>
             </Button>
+
+            {/* Secondary Utility Buttons */}
+            <div className="flex gap-4 w-full mt-4">
+              <Button
+                variant="outline"
+                className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm"
+                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('parking near ' + activeEvent.venueName + ' ' + activeEvent.cityState)}`, '_blank')}
+              >
+                <Car className="mr-2 h-4 w-4 text-purple-400" /> Find Parking
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm"
+                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('restaurants bars near ' + activeEvent.venueName + ' ' + activeEvent.cityState)}`, '_blank')}
+              >
+                <Utensils className="mr-2 h-4 w-4 text-teal-400" /> Food & Drink
+              </Button>
+            </div>
           </div>
         </div>
 
