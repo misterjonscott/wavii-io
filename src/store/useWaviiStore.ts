@@ -48,6 +48,8 @@ interface WaviiState {
   sortOrder: SortOrder;
   isPlannerOpen: boolean;
   plannerTab: 'parking' | 'dining';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  placesData: Record<'parking' | 'dining', any[]>;
   parkingOptions: WaviiEvent[];
 
   // Actions
@@ -72,8 +74,11 @@ interface WaviiState {
   setSorting: (field: SortField) => void;
   resetFilters: () => void;
   hydrateLiveData: () => Promise<void>;
+  setIsPlannerOpen: (isOpen: boolean) => void;
   setPlannerOpen: (isOpen: boolean) => void;
   setPlannerTab: (tab: 'parking' | 'dining') => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setPlacesData: (tab: 'parking' | 'dining', data: any[]) => void;
 }
 
 export const BLANK_WEATHER_DENSITY: DailyWeatherAndDensity[] = [
@@ -119,6 +124,10 @@ export const useWaviiStore = create<WaviiState>()(
       sortOrder: 'desc',
       isPlannerOpen: false,
       plannerTab: 'parking',
+      placesData: {
+        parking: [],
+        dining: [],
+      },
       parkingOptions: [],
 
       setActiveNavTab: (tab) => set({ activeNavTab: tab }),
@@ -179,8 +188,16 @@ export const useWaviiStore = create<WaviiState>()(
           ...(selectedEventId === null ? { isPlannerOpen: false } : {}),
         }),
 
+      setIsPlannerOpen: (isPlannerOpen) => set({ isPlannerOpen }),
       setPlannerOpen: (isPlannerOpen) => set({ isPlannerOpen }),
       setPlannerTab: (plannerTab) => set({ plannerTab }),
+      setPlacesData: (tab, data) =>
+        set((state) => ({
+          placesData: {
+            ...state.placesData,
+            [tab]: data,
+          },
+        })),
 
       setSorting: (field) =>
         set((state) => ({

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   MapPin,
@@ -10,6 +10,7 @@ import {
   Heart,
   Car,
   Utensils,
+  Star,
 } from 'lucide-react';
 import { useWaviiStore } from '@/store/useWaviiStore';
 import { WaviiEvent } from '@/types/wavii';
@@ -17,6 +18,25 @@ import { TAXONOMY_STYLES } from '@/data/mockData';
 import { getEnvironmentalTags } from '@/lib/adapters';
 import { Button } from '@/components/ui/button';
 import { EventMap } from '@/components/wavii/EventMap';
+
+function getMiles(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): string {
+  const R = 3958.8;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(2);
+}
 
 function getGoogleCalendarUrl(event: WaviiEvent): string {
   const title = encodeURIComponent(event.title);
@@ -34,16 +54,47 @@ function getVenueDirectionsUrl(event: WaviiEvent): string {
 }
 
 export function EventDetail() {
-  const { events, selectedEventId, setSelectedEventId, savedEventIds, toggleSaveEvent, weatherDensity, isPlannerOpen, plannerTab, setPlannerOpen, setPlannerTab } = useWaviiStore();
+  const {
+    events,
+    selectedEventId,
+    setSelectedEventId,
+    savedEventIds,
+    toggleSaveEvent,
+    weatherDensity,
+    isPlannerOpen,
+    plannerTab,
+    placesData,
+    setPlannerOpen,
+    setPlannerTab,
+    setPlacesData,
+  } = useWaviiStore();
   const activeEvent = events.find((e) => e.id === selectedEventId);
+  const selectedEvent = activeEvent;
 
-  const plannerRef = React.useRef<HTMLDivElement | null>(null);
+  const plannerRef = useRef<HTMLDivElement | null>(null);
+  const fetchedTabs = useRef({ parking: false, dining: false });
 
   useEffect(() => {
     if (isPlannerOpen && plannerRef.current) {
       plannerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [isPlannerOpen, plannerTab]);
+
+  useEffect(() => {
+    if (isPlannerOpen && activeEvent && !fetchedTabs.current[plannerTab]) {
+      // Immediately mark this tab as fetched so it cannot loop
+      fetchedTabs.current[plannerTab] = true;
+
+      fetch(`/api/places?lat=${activeEvent.lat}&lon=${activeEvent.lon}&type=${plannerTab === 'dining' ? 'restaurant' : 'parking'}`)
+        .then((res) => res.json())
+        .then((data) => {
+          // Ensure we always pass an array to Zustand, even if Google returns an error object
+          const results = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+          setPlacesData(plannerTab, results);
+        })
+        .catch((err) => console.error('Places fetch error:', err));
+    }
+  }, [isPlannerOpen, plannerTab, activeEvent, setPlacesData]);
 
   const [weatherData, setWeatherData] = useState<{
     tempMax: number;
@@ -117,7 +168,10 @@ export function EventDetail() {
     <div className="relative rounded-xl border border-border-muted bg-surface-card/95 p-6 w-full shadow-2xl">
       {/* Absolute top-right close 'X' button */}
       <button
-        onClick={() => setSelectedEventId(null)}
+        onClick={() => {
+          fetchedTabs.current = { parking: false, dining: false };
+          setSelectedEventId(null);
+        }}
         className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700"
         title="Close"
       >
@@ -216,7 +270,7 @@ export function EventDetail() {
           <div className="pt-2">
             <Button
               asChild
-              className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold h-10 text-sm shadow-lg shadow-purple-900/30"
+              className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold h-10 text-sm shadow-lg shadow-purple-900/30 cursor-pointer"
             >
               <a
                 href={activeEvent.seatgeekUrl}
@@ -231,7 +285,7 @@ export function EventDetail() {
             <div className="flex gap-4 w-full mt-4">
               <Button
                 variant="outline"
-                className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm"
+                className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm cursor-pointer"
                 onClick={() => {
                   setPlannerOpen(true);
                   setPlannerTab('parking');
@@ -241,7 +295,7 @@ export function EventDetail() {
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm"
+                className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm cursor-pointer"
                 onClick={() => {
                   setPlannerOpen(true);
                   setPlannerTab('dining');
@@ -332,7 +386,7 @@ export function EventDetail() {
                 size="sm"
                 variant={plannerTab === 'parking' ? 'default' : 'outline'}
                 onClick={() => setPlannerTab('parking')}
-                className={plannerTab === 'parking' ? 'bg-purple-600 text-white' : 'border-slate-700 text-slate-300'}
+                className={`${plannerTab === 'parking' ? 'bg-purple-600 text-white' : 'border-slate-700 text-slate-300'} cursor-pointer`}
               >
                 Parking
               </Button>
@@ -340,36 +394,86 @@ export function EventDetail() {
                 size="sm"
                 variant={plannerTab === 'dining' ? 'default' : 'outline'}
                 onClick={() => setPlannerTab('dining')}
-                className={plannerTab === 'dining' ? 'bg-purple-600 text-white' : 'border-slate-700 text-slate-300'}
+                className={`${plannerTab === 'dining' ? 'bg-purple-600 text-white' : 'border-slate-700 text-slate-300'} cursor-pointer`}
               >
                 Dining
               </Button>
             </div>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 text-center text-slate-400">
-            <p className="text-sm font-medium">
-              {plannerTab === 'parking'
-                ? `Showing verified parking options near ${activeEvent.venueName}...`
-                : `Showing top-rated restaurants and bars near ${activeEvent.venueName}...`}
-            </p>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-lg border border-slate-800 bg-slate-900 text-left">
-                <div className="h-3 w-24 bg-slate-800 rounded mb-2 animate-pulse" />
-                <div className="h-6 w-32 bg-slate-800 rounded mb-3 animate-pulse" />
-                <div className="h-4 w-full bg-slate-800/60 rounded animate-pulse" />
-              </div>
-              <div className="p-4 rounded-lg border border-slate-800 bg-slate-900 text-left">
-                <div className="h-3 w-24 bg-slate-800 rounded mb-2 animate-pulse" />
-                <div className="h-6 w-32 bg-slate-800 rounded mb-3 animate-pulse" />
-                <div className="h-4 w-full bg-slate-800/60 rounded animate-pulse" />
-              </div>
-              <div className="p-4 rounded-lg border border-slate-800 bg-slate-900 text-left">
-                <div className="h-3 w-24 bg-slate-800 rounded mb-2 animate-pulse" />
-                <div className="h-6 w-32 bg-slate-800 rounded mb-3 animate-pulse" />
-                <div className="h-4 w-full bg-slate-800/60 rounded animate-pulse" />
-              </div>
+
+          {placesData[plannerTab] && placesData[plannerTab].length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {placesData[plannerTab]
+                .filter((place) => {
+                  const name = place.displayName?.text || '';
+                  return !/private|permit|reserved/i.test(name);
+                })
+                .map((place, index) => (
+                <div
+                  key={place.id || place.place_id || index}
+                  className="p-4 rounded-xl border border-slate-800 bg-slate-900/90 text-left flex flex-col justify-between hover:border-slate-700 transition-colors shadow-lg"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-semibold text-white text-base leading-snug line-clamp-1" title={place.displayName?.text}>
+                        {place.displayName?.text}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-amber-400 font-medium">
+                      {place.rating !== undefined ? (
+                        <>
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          <span>{place.rating}</span>
+                          {place.userRatingCount !== undefined && (
+                            <span className="text-slate-400">({place.userRatingCount.toLocaleString()})</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-slate-400">No ratings yet</span>
+                      )}
+                    </div>
+                    {place.formattedAddress && (
+                      <p className="text-xs text-slate-400 flex items-start gap-1 line-clamp-1" title={place.formattedAddress}>
+                        <MapPin className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
+                        <span>{place.formattedAddress}</span>
+                      </p>
+                    )}
+                    {place.location?.latitude !== undefined && place.location?.longitude !== undefined && (
+                      <p className="text-xs text-slate-400">
+                        {getMiles(
+                          selectedEvent.lat,
+                          selectedEvent.lon,
+                          place.location.latitude,
+                          place.location.longitude
+                        )}{' '}
+                        miles away
+                      </p>
+                    )}
+                  </div>
+                  <div className="pt-4 mt-2 border-t border-slate-800/80">
+                    <a
+                      href={
+                        place.location?.latitude !== undefined && place.location?.longitude !== undefined
+                          ? `https://www.google.com/maps/dir/?api=1&origin=${place.location.latitude},${place.location.longitude}&destination=${selectedEvent.lat},${selectedEvent.lon}&travelmode=walking`
+                          : place.googleMapsUri || '#'
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-colors border border-slate-700"
+                    >
+                      <Navigation className="h-3.5 w-3.5 text-teal-400" /> Directions
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 text-center text-slate-400">
+              <p className="text-sm font-medium">
+                No {plannerTab === 'parking' ? 'parking options' : 'dining spots'} found nearby.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
