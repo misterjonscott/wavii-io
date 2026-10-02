@@ -51,6 +51,10 @@ interface WaviiState {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   placesData: Record<'parking' | 'dining', any[]>;
   parkingOptions: WaviiEvent[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  selectedParking: any | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  selectedDining: any | null;
 
   // Actions
   setActiveNavTab: (tab: NavTab) => void;
@@ -79,6 +83,10 @@ interface WaviiState {
   setPlannerTab: (tab: 'parking' | 'dining') => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setPlacesData: (tab: 'parking' | 'dining', data: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setSelectedParking: (place: any | null) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setSelectedDining: (place: any | null) => void;
 }
 
 export const BLANK_WEATHER_DENSITY: DailyWeatherAndDensity[] = [
@@ -129,6 +137,8 @@ export const useWaviiStore = create<WaviiState>()(
         dining: [],
       },
       parkingOptions: [],
+      selectedParking: null,
+      selectedDining: null,
 
       setActiveNavTab: (tab) => set({ activeNavTab: tab }),
 
@@ -185,7 +195,13 @@ export const useWaviiStore = create<WaviiState>()(
       setSelectedEventId: (selectedEventId) =>
         set({
           selectedEventId,
-          ...(selectedEventId === null ? { isPlannerOpen: false } : {}),
+          ...(selectedEventId === null
+            ? {
+                isPlannerOpen: false,
+                selectedParking: null,
+                selectedDining: null,
+              }
+            : {}),
         }),
 
       setIsPlannerOpen: (isPlannerOpen) => set({ isPlannerOpen }),
@@ -198,6 +214,8 @@ export const useWaviiStore = create<WaviiState>()(
             [tab]: data,
           },
         })),
+      setSelectedParking: (selectedParking) => set({ selectedParking }),
+      setSelectedDining: (selectedDining) => set({ selectedDining }),
 
       setSorting: (field) =>
         set((state) => ({
