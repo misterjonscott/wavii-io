@@ -69,7 +69,6 @@ export function EventDetail() {
     setPlacesData,
   } = useWaviiStore();
   const activeEvent = events.find((e) => e.id === selectedEventId);
-  const selectedEvent = activeEvent;
 
   const plannerRef = useRef<HTMLDivElement | null>(null);
   const fetchedTabs = useRef({ parking: false, dining: false });
@@ -122,7 +121,7 @@ export function EventDetail() {
     let isMounted = true;
 
     fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${eventDate}&end_date=${eventDate}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=auto`
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&start_date=${eventDate}&end_date=${eventDate}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&temperature_unit=fahrenheit&timezone=auto`
     )
       .then((res) => {
         if (!res.ok) throw new Error('Network response was not ok');
@@ -291,7 +290,7 @@ export function EventDetail() {
                   setPlannerTab('parking');
                 }}
               >
-                <Car className="mr-2 h-4 w-4 text-purple-400" /> Find Parking
+                <Car className="mr-2 h-4 w-4 text-purple-400" /> Parking Nearby
               </Button>
               <Button
                 variant="outline"
@@ -379,7 +378,7 @@ export function EventDetail() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               {plannerTab === 'parking' ? <Car className="h-5 w-5 text-purple-400" /> : <Utensils className="h-5 w-5 text-teal-400" />}
-              {plannerTab === 'parking' ? 'Find Parking Passes' : 'Food & Drink Near Venue'}
+              {plannerTab === 'parking' ? 'Parking Near Venue' : 'Food & Drink Near Venue'}
             </h2>
             <div className="flex gap-2">
               <Button
@@ -441,8 +440,8 @@ export function EventDetail() {
                     {place.location?.latitude !== undefined && place.location?.longitude !== undefined && (
                       <p className="text-xs text-slate-400">
                         {getMiles(
-                          selectedEvent.lat,
-                          selectedEvent.lon,
+                          activeEvent.lat,
+                          activeEvent.lon,
                           place.location.latitude,
                           place.location.longitude
                         )}{' '}
@@ -454,7 +453,7 @@ export function EventDetail() {
                     <a
                       href={
                         place.location?.latitude !== undefined && place.location?.longitude !== undefined
-                          ? `https://www.google.com/maps/dir/?api=1&origin=${place.location.latitude},${place.location.longitude}&destination=${selectedEvent.lat},${selectedEvent.lon}&travelmode=walking`
+                          ? `https://www.google.com/maps/dir/?api=1&origin=${place.location.latitude},${place.location.longitude}&destination=${activeEvent.lat},${activeEvent.lon}&travelmode=walking`
                           : place.googleMapsUri || '#'
                       }
                       target="_blank"
