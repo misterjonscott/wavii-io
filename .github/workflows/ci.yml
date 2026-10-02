@@ -58,4 +58,4 @@ jobs:
             --region us-central1 \
             --allow-unauthenticated \
             --port 3000 \
-            --set-env-vars SEATGEEK_CLIENT_ID=${{ secrets.SEATGEEK_CLIENT_ID }}
+            --set-env-vars SEATGEEK_API_KEY=${{ secrets.SEATGEEK_API_KEY }},GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}
