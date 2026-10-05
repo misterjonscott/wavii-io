@@ -1,0 +1,17 @@
+# Double-tap massive directories just in case the indexer is buggy
+node_modules/
+.next/
+.git/
+
+# Lockfiles (The silent token killers)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Binaries, Caches, and Media
+*.sst
+*.dylib
+*.db
+*.svg
+*.png
+*.jpg
