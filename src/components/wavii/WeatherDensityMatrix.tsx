@@ -88,7 +88,7 @@ export function WeatherDensityMatrix() {
 
   const legendItems: { id: EventTaxonomy; label: string; bg: string; color: string }[] = [
     { id: 'concert', label: 'Concerts', bg: 'bg-fuchsia-500', color: '#d946ef' },
-    { id: 'comedy', label: 'Comedy', bg: 'bg-orange-400', color: '#fb923c' },
+    { id: 'family', label: 'Family', bg: 'bg-orange-400', color: '#fb923c' },
     { id: 'theater', label: 'Theater', bg: 'bg-indigo-500', color: '#6366f1' },
     { id: 'sports', label: 'Sports', bg: 'bg-teal-400', color: '#2dd4bf' },
   ];
@@ -147,10 +147,10 @@ export function WeatherDensityMatrix() {
             });
 
             const concerts = dayEvents.filter((e) => e.taxonomy === 'concert').length;
-            const comedy = dayEvents.filter((e) => e.taxonomy === 'comedy').length;
+            const family = dayEvents.filter((e) => e.taxonomy === 'family').length;
             const theater = dayEvents.filter((e) => e.taxonomy === 'theater').length;
             const sports = dayEvents.filter((e) => e.taxonomy === 'sports').length;
-            const total = concerts + comedy + theater + sports;
+            const total = concerts + family + theater + sports;
 
             const isDaySelected = selectedDay === day.day;
 
@@ -179,12 +179,12 @@ export function WeatherDensityMatrix() {
                     />
                     <div
                       style={{
-                        height: `${Math.max(2, comedy * 6)}px`,
+                        height: `${Math.max(2, family * 6)}px`,
                         backgroundColor: 'rgba(251, 146, 60, 0.2)',
                         borderTop: '2px solid #fb923c',
                       }}
                       className={`w-full transition-all ${
-                        selectedCategory !== 'all' && selectedCategory !== 'comedy'
+                        selectedCategory !== 'all' && selectedCategory !== 'family'
                           ? 'opacity-25'
                           : 'opacity-100'
                       }`}
@@ -237,9 +237,9 @@ export function WeatherDensityMatrix() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between whitespace-nowrap text-orange-300">
-                      <span>Comedy:</span>
+                      <span>Family:</span>
                       <span className="font-mono font-semibold ml-1.5">
-                        <AnimatedCount value={comedy} />
+                        <AnimatedCount value={family} />
                       </span>
                     </div>
                     <div className="flex items-center justify-between whitespace-nowrap text-indigo-300">

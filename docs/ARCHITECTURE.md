@@ -92,7 +92,7 @@ export interface DailyWeatherAndDensity {
   lowTemp: number;
   precipChance: number;
   concerts: number;
-  comedy: number;
+  family: number;
   theater: number;
   sports: number;
   aqi?: number | undefined;
@@ -101,7 +101,7 @@ export interface DailyWeatherAndDensity {
 ```
 
 ```typescript
-export type EventTaxonomy = 'concert' | 'comedy' | 'theater' | 'sports';
+export type EventTaxonomy = 'concert' | 'family' | 'theater' | 'sports';
 ```
 
 ```typescript

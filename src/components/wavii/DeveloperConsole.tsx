@@ -164,7 +164,7 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
           lowTemp: "number (required)",
           precipChance: "number (required)",
           concerts: "number (required)",
-          comedy: "number (required)",
+          family: "number (required)",
           theater: "number (required)",
           sports: "number (required)",
           aqi: "number | undefined",

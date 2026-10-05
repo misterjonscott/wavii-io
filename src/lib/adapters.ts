@@ -72,7 +72,7 @@ const FALLBACK_IMAGES: Record<EventTaxonomy, string[]> = {
     'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=600&q=80',
     'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?auto=format&fit=crop&w=600&q=80',
   ],
-  comedy: [
+  family: [
     'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?auto=format&fit=crop&w=600&q=80',
     'https://images.unsplash.com/photo-1527224857830-43a7acc85260?auto=format&fit=crop&w=600&q=80',
     'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=600&q=80',
@@ -131,7 +131,7 @@ export function mergeLiveWeatherWithDensity(
     });
 
     const concerts = dayEvents.filter((e) => e.taxonomy === 'concert').length;
-    const comedy = dayEvents.filter((e) => e.taxonomy === 'comedy').length;
+    const family = dayEvents.filter((e) => e.taxonomy === 'family').length;
     const theater = dayEvents.filter((e) => e.taxonomy === 'theater').length;
     const sports = dayEvents.filter((e) => e.taxonomy === 'sports').length;
 
@@ -157,7 +157,7 @@ export function mergeLiveWeatherWithDensity(
       lowTemp: Math.round(temperature_2m_min[idx] ?? 55),
       precipChance: Math.round(precipitation_probability_max[idx] ?? 10),
       concerts: concerts > 0 ? concerts : 2,
-      comedy: comedy > 0 ? comedy : 1,
+      family: family > 0 ? family : 1,
       theater: theater > 0 ? theater : 1,
       sports: sports > 0 ? sports : 1,
       aqi,
@@ -238,7 +238,7 @@ function mapSeatGeekTaxonomy(
   const combined = `${rawType} ${taxonomies
     .map((t) => t.name)
     .join(' ')}`.toLowerCase();
-  if (combined.includes('comedy')) return 'comedy';
+  if (combined.includes('family')) return 'family';
   if (
     combined.includes('theater') ||
     combined.includes('broadway') ||

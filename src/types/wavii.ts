@@ -1,4 +1,4 @@
-export type EventTaxonomy = 'concert' | 'comedy' | 'theater' | 'sports';
+export type EventTaxonomy = 'concert' | 'family' | 'theater' | 'sports';
 export type ViewMode = 'map' | 'list';
 export type SortField =
   | 'title'
@@ -110,7 +110,7 @@ export interface DailyWeatherAndDensity {
   lowTemp: number;
   precipChance: number;
   concerts: number;
-  comedy: number;
+  family: number;
   theater: number;
   sports: number;
   aqi?: number;

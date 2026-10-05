@@ -50,8 +50,8 @@ const CATEGORIES: { id: EventTaxonomy; label: string; image: string }[] = [
     image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=800&q=80',
   },
   {
-    id: 'comedy',
-    label: 'Comedy',
+    id: 'family',
+    label: 'Family',
     image: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?auto=format&fit=crop&w=800&q=80',
   },
   {
@@ -251,7 +251,7 @@ export default function WaviiDashboard() {
                 <SelectContent className="bg-surface-card border-border-muted text-slate-200">
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="concert">Concerts</SelectItem>
-                  <SelectItem value="comedy">Comedy</SelectItem>
+                  <SelectItem value="family">Family</SelectItem>
                   <SelectItem value="theater">Theater</SelectItem>
                   <SelectItem value="sports">Sports</SelectItem>
                 </SelectContent>
