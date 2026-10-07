@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('lat', lat.toString());
     url.searchParams.set('lon', lon.toString());
     url.searchParams.set('range', '50mi');
-    url.searchParams.set('per_page', '40');
+    url.searchParams.set('per_page', '100');
     url.searchParams.set('sort', 'score.desc');
     url.searchParams.set('client_id', seatGeekClientId.trim());
 
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('apikey', ticketmasterApiKey.trim());
     url.searchParams.set('latlong', `${lat},${lon}`);
     url.searchParams.set('radius', '50'); // Ticketmaster uses miles by default
-    url.searchParams.set('size', '40');
+    url.searchParams.set('size', '100');
 
     if (categoryParam) {
       let classificationName: string | undefined;
@@ -83,16 +83,16 @@ export async function GET(request: NextRequest) {
 
   const allEvents: WaviiEvent[] = [];
 
-  if (seatGeekResult.status === 'fulfilled') {
-    allEvents.push(...seatGeekResult.value);
-  } else {
-    console.error('SeatGeek fetch failed:', seatGeekResult.reason);
-  }
-
   if (ticketmasterResult.status === 'fulfilled') {
     allEvents.push(...ticketmasterResult.value);
   } else {
     console.error('Ticketmaster fetch failed:', ticketmasterResult.reason);
+  }
+
+  if (seatGeekResult.status === 'fulfilled') {
+    allEvents.push(...seatGeekResult.value);
+  } else {
+    console.error('SeatGeek fetch failed:', seatGeekResult.reason);
   }
 
   if (allEvents.length === 0) {
