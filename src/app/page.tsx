@@ -1,27 +1,19 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   Plus,
   Radio,
-  Sparkles,
-  MapPin,
-  Navigation,
-  CalendarPlus,
-  ExternalLink,
-  Heart,
-  ArrowLeft,
 } from 'lucide-react';
 import { useWaviiStore, NavTab } from '@/store/useWaviiStore';
-import { EventTaxonomy, WaviiEvent } from '@/types/wavii';
+import { EventTaxonomy } from '@/types/wavii';
 import { EventDataTable } from '@/components/wavii/EventDataTable';
 import { WeatherDensityMatrix } from '@/components/wavii/WeatherDensityMatrix';
 import { TokenizedFilterBar } from '@/components/wavii/TokenizedFilterBar';
 import { DeveloperConsole } from '@/components/wavii/DeveloperConsole';
-import { TAXONOMY_STYLES } from '@/data/mockData';
-import { getEnvironmentalTags } from '@/lib/adapters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -31,12 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const CATEGORIES: { id: EventTaxonomy; label: string; image: string }[] = [
   {
@@ -104,7 +91,7 @@ export default function WaviiDashboard() {
             <div className="flex items-center gap-4">
               <h1
                 style={{ fontFamily: 'var(--font-logo)' }}
-                className="text-3xl tracking-wide bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 bg-clip-text text-transparent py-1"
+                className="text-3xl tracking-wide bg-linear-to-r from-rose-500 via-pink-500 to-amber-500 bg-clip-text text-transparent py-1"
               >
                 Wavii.io
               </h1>
@@ -187,13 +174,13 @@ export default function WaviiDashboard() {
             </Button>
 
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[220px]">
+            <div className="relative flex-1 min-w-55">
               <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               <Input
                 placeholder="Enter location, venue, or artist..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-9 bg-surface-card border-border-muted text-slate-100 !text-xs placeholder:text-xs placeholder:text-slate-400 focus-visible:ring-purple-500"
+                className="pl-8 h-9 bg-surface-card border-border-muted text-slate-100 text-xs! placeholder:text-xs placeholder:text-slate-400 focus-visible:ring-purple-500"
               />
             </div>
 
@@ -212,7 +199,7 @@ export default function WaviiDashboard() {
                   placeholder="Any"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  className="pl-6 pr-2.5 h-9 bg-surface-card border-border-muted text-slate-100 font-mono !text-xs placeholder:font-sans placeholder:text-xs placeholder:text-slate-500 focus-visible:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="pl-6 pr-2.5 h-9 bg-surface-card border-border-muted text-slate-100 font-mono text-xs! placeholder:font-sans placeholder:text-xs placeholder:text-slate-500 focus-visible:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>
@@ -224,7 +211,7 @@ export default function WaviiDashboard() {
                 value={String(distanceMiles)}
                 onValueChange={(val) => setDistanceMiles(Number(val))}
               >
-                <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 !text-xs">
+                <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 text-xs!">
                   <SelectValue placeholder="Distance" />
                 </SelectTrigger>
                 <SelectContent className="bg-surface-card border-border-muted text-slate-200">
@@ -245,7 +232,7 @@ export default function WaviiDashboard() {
                   setSelectedCategory(val as 'all' | EventTaxonomy)
                 }
               >
-                <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 !text-xs">
+                <SelectTrigger className="w-28 h-9 bg-surface-card border-border-muted text-slate-200 text-xs!">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent className="bg-surface-card border-border-muted text-slate-200">
@@ -301,9 +288,11 @@ export default function WaviiDashboard() {
                         }`}
                       >
                         <div className="h-[60%] w-full relative overflow-hidden">
-                          <img
+                          <Image
                             src={cat.image}
                             alt={cat.label}
+                            width={400}
+                            height={240}
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>

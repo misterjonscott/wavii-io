@@ -1,17 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   X,
   MapPin,
   CalendarPlus,
-  Navigation,
   ExternalLink,
   Heart,
-  Car,
-  Utensils,
-  Star,
+  Navigation, // Re-added Navigation for getVenueDirectionsUrl used below.
 } from 'lucide-react';
 import { useWaviiStore } from '@/store/useWaviiStore';
 import { WaviiEvent } from '@/types/wavii';
@@ -20,28 +17,9 @@ import { getEnvironmentalTags } from '@/lib/adapters';
 import { Button } from '@/components/ui/button';
 import { EventMap } from '@/components/wavii/EventMap';
 import { EventActionBar } from '@/components/wavii/EventActionBar';
+import { EventLogistics } from '@/components/wavii/EventLogistics';
 
-
-function getMiles(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): string {
-  const R = 3958.8;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return (R * c).toFixed(2);
-}
-
-
+// This helper function is now exclusively used within EventDetail.tsx, so it remains here.
 function getVenueDirectionsUrl(event: WaviiEvent): string {
   const dest = encodeURIComponent(`${event.venueName} ${event.cityState}`);
   return `https://www.google.com/maps/search/?api=1&query=${dest}`;
@@ -60,7 +38,7 @@ export function EventDetail() {
     placesData,
     setPlannerOpen,
     setPlannerTab,
-    setPlacesData,
+    setPlacesData, // setPlacesData is still needed here for fetching places in EventDetail.
     selectedParking,
     selectedDining,
     setSelectedParking,
@@ -68,30 +46,8 @@ export function EventDetail() {
   } = useWaviiStore();
   const activeEvent = events.find((e) => e.id === selectedEventId);
 
-  const plannerRef = useRef<HTMLDivElement | null>(null);
-  const fetchedTabs = useRef({ parking: false, dining: false });
-
-  useEffect(() => {
-    if (isPlannerOpen && plannerRef.current) {
-      plannerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [isPlannerOpen, plannerTab]);
-
-  useEffect(() => {
-    if (isPlannerOpen && activeEvent && !fetchedTabs.current[plannerTab]) {
-      // Immediately mark this tab as fetched so it cannot loop
-      fetchedTabs.current[plannerTab] = true;
-
-      fetch(`/api/places?lat=${activeEvent.lat}&lon=${activeEvent.lon}&type=${plannerTab === 'dining' ? 'restaurant' : 'parking'}`)
-        .then((res) => res.json())
-        .then((data) => {
-          // Ensure we always pass an array to Zustand, even if Google returns an error object
-          const results = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-          setPlacesData(plannerTab, results);
-        })
-        .catch((err) => console.error('Places fetch error:', err));
-    }
-  }, [isPlannerOpen, plannerTab, activeEvent, setPlacesData]);
+  // The plannerRef and fetchedTabs are now local to EventLogistics, no longer needed here.
+  // The useEffect for fetching places data is also moved to EventLogistics.
 
   const [weatherData, setWeatherData] = useState<{
     tempMax: number;
@@ -161,44 +117,41 @@ export function EventDetail() {
 
   const isSavedActive = savedEventIds.includes(activeEvent.id);
 
-
-
   return (
-    <div className="relative rounded-xl border border-border-muted bg-surface-card/95 p-6 w-full shadow-2xl">
+    <div className='relative rounded-xl border border-border-muted bg-surface-card/95 p-6 w-full shadow-2xl'>
       {/* Absolute top-right close 'X' button */}
       <button
         onClick={() => {
-          fetchedTabs.current = { parking: false, dining: false };
           setSelectedEventId(null);
         }}
-        className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700"
-        title="Close"
+        className='absolute top-4 right-4 z-20 p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700'
+        title='Close'
       >
-        <X className="h-4 w-4" />
+        <X className='h-4 w-4' />
       </button>
 
       {/* 3-Column CSS Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full">
+      <div className='grid grid-cols-1 md:grid-cols-12 gap-6 w-full'>
         {/* Left Column (Visuals - col-span-4) */}
-        <div className="w-full aspect-square md:h-full md:col-span-4 relative rounded-lg overflow-hidden border border-border-muted">
+        <div className='w-full aspect-square md:h-full md:col-span-4 relative rounded-lg overflow-hidden border border-border-muted'>
           <Image
             src={activeEvent.imageUrl}
             alt={activeEvent.title}
             fill
-            className="w-full h-full object-cover"
+            className='w-full h-full object-cover'
           />
-          <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 via-transparent to-transparent" />
-          <span className="absolute top-3 right-3 bg-emerald-500 text-slate-950 font-mono font-bold text-xs px-3 py-1 rounded-md shadow-lg">
+          <div className='absolute inset-0 bg-linear-to-t from-slate-950/80 via-transparent to-transparent' />
+          <span className='absolute top-3 right-3 bg-emerald-500 text-slate-950 font-mono font-bold text-xs px-3 py-1 rounded-md shadow-lg'>
             From ${activeEvent.estimatedPrice}
           </span>
         </div>
 
         {/* Center Column (Core Info - col-span-5) */}
-        <div className="md:col-span-5 flex flex-col justify-between space-y-4">
-          <div className="space-y-3">
+        <div className='md:col-span-5 flex flex-col justify-between space-y-4'>
+          <div className='space-y-3'>
             {/* Top: Event Title (h1) */}
-            <div className="flex items-start justify-between gap-3 pr-8">
-              <h1 className="text-xl md:text-2xl font-bold text-white leading-tight">
+            <div className='flex items-start justify-between gap-3 pr-8'>
+              <h1 className='text-xl md:text-2xl font-bold text-white leading-tight'>
                 {activeEvent.title}
               </h1>
               <button
@@ -215,7 +168,7 @@ export function EventDetail() {
             </div>
 
             {/* Directly below title: Tag pills (Genre, Type, AQI) */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className='flex flex-wrap gap-1.5'>
               {activeEvent.tags.map((tag) => (
                 <span
                   key={tag}
@@ -239,26 +192,26 @@ export function EventDetail() {
             </div>
 
             {/* Middle: Venue location text and Date/Time layout */}
-            <div className="space-y-3 pt-2 text-xs md:text-sm">
-              <div className="flex items-start gap-2.5 text-slate-200">
-                <MapPin className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
+            <div className='space-y-3 pt-2 text-xs md:text-sm'>
+              <div className='flex items-start gap-2.5 text-slate-200'>
+                <MapPin className='h-4 w-4 text-purple-400 shrink-0 mt-0.5' />
                 <div>
-                  <p className="font-semibold text-white">
+                  <p className='font-semibold text-white'>
                     {activeEvent.venueName}
                   </p>
-                  <p className="text-slate-400">
+                  <p className='text-slate-400'>
                     {activeEvent.cityState} • {activeEvent.distanceMiles} miles away
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 text-slate-200">
-                <CalendarPlus className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
+              <div className='flex items-start gap-2.5 text-slate-200'>
+                <CalendarPlus className='h-4 w-4 text-purple-400 shrink-0 mt-0.5' />
                 <div>
-                  <p className="font-semibold text-white">
+                  <p className='font-semibold text-white'>
                     {activeEvent.formattedDate}
                   </p>
-                  <p className="text-slate-400">
+                  <p className='text-slate-400'>
                     Doors open 1 hour prior to event time
                   </p>
                 </div>
@@ -266,23 +219,23 @@ export function EventDetail() {
             </div>
           </div>
 
-          {/* Bottom: Pin primary "Find Tickets on SeatGeek" CTA button */}
-          <div className="pt-2">
-            <div className="flex flex-wrap gap-2">
+          {/* Bottom: Ticket buttons and secondary utility buttons */}
+          <div className='pt-2'>
+            <div className='flex flex-wrap gap-2'>
               {activeEvent.ticketingOptions.map((option, index) => {
                 const isSeatGeek = option.source === 'seatgeek';
                 const buttonText = `Tickets (${option.source === 'seatgeek' ? 'SeatGeek' : 'Ticketmaster'})`;
                 const buttonClass = isSeatGeek
-                  ? "bg-purple-600 hover:bg-purple-500 shadow-purple-900/30"
-                  : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/30"; // Distinct blue for Ticketmaster
+                  ? 'bg-purple-600 hover:bg-purple-500 shadow-purple-900/30'
+                  : 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/30'; // Distinct blue for Ticketmaster
                 return (
                   <Button
                     key={index}
                     asChild
                     className={`flex-1 min-w-37.5 ${buttonClass} text-white font-semibold h-10 text-sm shadow-lg cursor-pointer`}
                   >
-                    <a href={option.url} target="_blank" rel="noreferrer">
-                      {buttonText} <ExternalLink className="ml-2 h-4 w-4" />
+                    <a href={option.url} target='_blank' rel='noreferrer'>
+                      {buttonText} <ExternalLink className='ml-2 h-4 w-4' />
                     </a>
                   </Button>
                 );
@@ -290,226 +243,105 @@ export function EventDetail() {
             </div>
 
             {/* Secondary Utility Buttons */}
-            <div className="flex gap-4 w-full mt-4">
+            <div className='flex gap-4 w-full mt-4'>
               <Button
-                variant="outline"
-                className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm cursor-pointer"
+                variant='outline'
+                className='flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm cursor-pointer'
                 onClick={() => {
                   setPlannerOpen(true);
                   setPlannerTab('parking');
                 }}
               >
-                <Car className="mr-2 h-4 w-4 text-purple-400" /> Parking Nearby
+                <Navigation className='mr-2 h-4 w-4 text-purple-400' /> Directions
+                Parking Nearby
               </Button>
               <Button
-                variant="outline"
-                className="flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm cursor-pointer"
+                variant='outline'
+                className='flex-1 bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors h-10 text-sm cursor-pointer'
                 onClick={() => {
                   setPlannerOpen(true);
                   setPlannerTab('dining');
                 }}
               >
-                <Utensils className="mr-2 h-4 w-4 text-teal-400" /> Food & Drink
+                <Navigation className='mr-2 h-4 w-4 text-teal-400' /> Directions
+                Food & Drink
               </Button>
             </div>
           </div>
         </div>
 
         {/* Right Column (Context & Utilities - col-span-3) */}
-        <div className="md:col-span-3 flex flex-col justify-between space-y-4">
+        <div className='md:col-span-3 flex flex-col justify-between space-y-4'>
           {/* Top: Embed EventMap with fixed height (e.g. h-48) and rounded corners */}
-          <div className="h-48 w-full rounded-lg overflow-hidden border border-border-muted shrink-0">
+          <div className='h-48 w-full rounded-lg overflow-hidden border border-border-muted shrink-0'>
             <EventMap />
           </div>
 
           {/* Middle: Live Weather & Sunset Data Card */}
-          <div className="flex-1 min-h-20 rounded-lg border border-border-muted bg-surface-card/90 p-3 flex flex-col justify-center text-xs">
+          <div className='flex-1 min-h-20 rounded-lg border border-border-muted bg-surface-card/90 p-3 flex flex-col justify-center text-xs'>
             {isBeyond14Days ? (
-              <p className="text-xs text-slate-400 text-center font-medium">
+              <p className='text-xs text-slate-400 text-center font-medium'>
                 Forecast available 14 days prior to event.
               </p>
             ) : weatherLoading ? (
-              <div className="flex items-center justify-center space-x-2 py-3">
-                <div className="h-4 w-4 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />
-                <span className="text-slate-400 text-xs">Fetching live weather...</span>
+              <div className='flex items-center justify-center space-x-2 py-3'>
+                <div className='h-4 w-4 rounded-full border-2 border-purple-400 border-t-transparent animate-spin' />
+                <span className='text-slate-400 text-xs'>Fetching live weather...</span>
               </div>
             ) : weatherDataError ? (
-              <p className="text-xs text-slate-400 text-center font-medium">
+              <p className='text-xs text-slate-400 text-center font-medium'>
                 {weatherDataError}
               </p>
             ) : weatherData ? (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-slate-300 font-medium">
-                  <span className="flex items-center gap-1.5">
-                    🌡️ Temp: <strong className="text-white">{weatherData.tempMax}° / {weatherData.tempMin}°</strong>
+              <div className='space-y-1.5'>
+                <div className='flex items-center justify-between text-slate-300 font-medium'>
+                  <span className='flex items-center gap-1.5'>
+                    🌡️ Temp: <strong className='text-white'>{weatherData.tempMax}° / {weatherData.tempMin}°</strong>
                   </span>
-                  <span className="flex items-center gap-1 text-sky-400">
+                  <span className='flex items-center gap-1 text-sky-400'>
                     💧 {weatherData.precip}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-slate-300 font-medium border-t border-border-muted/60 pt-1.5">
-                  <span className="flex items-center gap-1.5">
-                    🌅 Sunset: <strong className="text-white">{weatherData.sunset}</strong>
+                <div className='flex items-center justify-between text-slate-300 font-medium border-t border-border-muted/60 pt-1.5'>
+                  <span className='flex items-center gap-1.5'>
+                    🌅 Sunset: <strong className='text-white'>{weatherData.sunset}</strong>
                   </span>
-                  <span className="text-[10px] text-teal-400 font-mono">Open-Meteo Live</span>
+                  <span className='text-[10px] text-teal-400 font-mono'>Open-Meteo Live</span>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-slate-400 text-center">Weather data unavailable</p>
+              <p className='text-xs text-slate-400 text-center'>Weather data unavailable</p>
             )}
           </div>
 
-          {/* Bottom: Render utility buttons ("Directions" and "Add to Cal") side-by-side */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Bottom: Render utility buttons ("Directions") */}
+          <div className='grid grid-cols-1 gap-2'>
             <a
               href={getVenueDirectionsUrl(activeEvent)}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-colors border border-slate-700"
+              target='_blank'
+              rel='noreferrer'
+              className='inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-colors border border-slate-700'
             >
-              <Navigation className="h-3.5 w-3.5 text-teal-400" /> Directions
+              <Navigation className='h-3.5 w-3.5 text-teal-400' /> Directions
             </a>
-
           </div>
         </div>
       </div>
 
-      {/* Planner Container */}
-      {isPlannerOpen && (
-        <div ref={plannerRef} className="w-full mt-8 pt-8 border-t border-slate-800">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              {plannerTab === 'parking' ? <Car className="h-5 w-5 text-purple-400" /> : <Utensils className="h-5 w-5 text-teal-400" />}
-              {plannerTab === 'parking' ? 'Parking Near Venue' : 'Food & Drink Near Venue'}
-            </h2>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant={plannerTab === 'parking' ? 'default' : 'outline'}
-                onClick={() => setPlannerTab('parking')}
-                className={`${plannerTab === 'parking' ? 'bg-purple-600 text-white' : 'border-slate-700 text-slate-300'} cursor-pointer`}
-              >
-                Parking
-              </Button>
-              <Button
-                size="sm"
-                variant={plannerTab === 'dining' ? 'default' : 'outline'}
-                onClick={() => setPlannerTab('dining')}
-                className={`${plannerTab === 'dining' ? 'bg-purple-600 text-white' : 'border-slate-700 text-slate-300'} cursor-pointer`}
-              >
-                Dining
-              </Button>
-            </div>
-          </div>
-
-          {placesData[plannerTab] && placesData[plannerTab].length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {placesData[plannerTab]
-                .filter((place) => {
-                  const name = place.displayName?.text || '';
-                  return !/private|permit|reserved/i.test(name);
-                })
-                .map((place, index) => (
-                <div
-                  key={place.id || place.place_id || index}
-                  className={`p-4 rounded-xl border border-slate-800 bg-slate-900/90 text-left flex flex-col justify-between hover:border-slate-700 transition-colors shadow-lg ${
-                    (selectedParking?.googleMapsUri === place.googleMapsUri || selectedDining?.googleMapsUri === place.googleMapsUri)
-                      ? 'ring-2 ring-emerald-500' : ''
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold text-white text-base leading-snug line-clamp-1" title={place.displayName?.text}>
-                        {place.displayName?.text}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-amber-400 font-medium">
-                      {place.rating !== undefined ? (
-                        <>
-                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                          <span>{place.rating}</span>
-                          {place.userRatingCount !== undefined && (
-                            <span className="text-slate-400">({place.userRatingCount.toLocaleString()})</span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-slate-400">No ratings yet</span>
-                      )}
-                    </div>
-                    {place.formattedAddress && (
-                      <p className="text-xs text-slate-400 flex items-start gap-1 line-clamp-1" title={place.formattedAddress}>
-                        <MapPin className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
-                        <span>{place.formattedAddress}</span>
-                      </p>
-                    )}
-                    {place.location?.latitude !== undefined && place.location?.longitude !== undefined && (
-                      <p className="text-xs text-slate-400">
-                        {getMiles(
-                          activeEvent?.lat,
-                          activeEvent?.lon,
-                          place.location.latitude,
-                          place.location.longitude
-                        )}{' '}
-                        miles away
-                      </p>
-                    )}
-                  </div>
-                  <div className="pt-4 mt-2 border-t border-slate-800/80">
-                    <a
-                      href={
-                        place.location?.latitude !== undefined && place.location?.longitude !== undefined
-                          ? `https://www.google.com/maps/dir/?api=1&origin=${place.location.latitude},${place.location.longitude}&destination=${activeEvent.lat},${activeEvent.lon}&travelmode=walking`
-                          : place.googleMapsUri || '#'
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-colors border border-slate-700"
-                    >
-                      <Navigation className="h-3.5 w-3.5 text-teal-400" /> Directions
-                    </a>
-                  </div>
-                  <div className="mt-2">
-                    <Button size="sm" className={`w-full ${
-                        (plannerTab === 'parking' && selectedParking?.googleMapsUri === place.googleMapsUri) ||
-                        (plannerTab === 'dining' && selectedDining?.googleMapsUri === place.googleMapsUri)
-                          ? 'bg-red-600 hover:bg-red-500'
-                          : 'bg-purple-600 hover:bg-purple-500'
-                      } text-white font-semibold h-8 text-xs shadow-lg shadow-purple-900/30 cursor-pointer`}
-                      onClick={() => {
-                        if (plannerTab === 'parking') {
-                          if (selectedParking?.googleMapsUri === place.googleMapsUri) {
-                            setSelectedParking(null);
-                          } else {
-                            setSelectedParking(place);
-                          }
-                        } else {
-                          if (selectedDining?.googleMapsUri === place.googleMapsUri) {
-                            setSelectedDining(null);
-                            } else {
-                              setSelectedDining(place);
-                            }
-                          }
-                        }}
-                    >
-                      {
-                        (plannerTab === 'parking' && selectedParking?.googleMapsUri === place.googleMapsUri) ||
-                        (plannerTab === 'dining' && selectedDining?.googleMapsUri === place.googleMapsUri)
-                          ? 'Remove from Plan'
-                          : 'Add to Plan'
-                      }
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 text-center text-slate-400">
-              <p className="text-sm font-medium">
-                No {plannerTab === 'parking' ? 'parking options' : 'dining spots'} found nearby.
-              </p>
-            </div>
-          )}
-        </div>
+      {isPlannerOpen && activeEvent && (
+        <EventLogistics
+          activeEvent={activeEvent}
+          isPlannerOpen={isPlannerOpen}
+          plannerTab={plannerTab}
+          placesData={placesData}
+          setPlannerOpen={setPlannerOpen}
+          setPlannerTab={setPlannerTab}
+          setPlacesData={setPlacesData}
+          selectedParking={selectedParking}
+          selectedDining={selectedDining}
+          setSelectedParking={setSelectedParking}
+          setSelectedDining={setSelectedDining}
+        />
       )}
 
       {(selectedParking || selectedDining) && activeEvent && (

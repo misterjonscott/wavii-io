@@ -1,5 +1,3 @@
-import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 // Define the structure of the itinerary data
@@ -77,7 +75,7 @@ export default async function PlanPage({
         {payload.parkingName && (
           <section className="border-t pt-6">
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Parking Information</h3>
-            <div className="border border-slate-700 border-l-4 border-emerald-500 bg-slate-800/50 p-4 rounded-md">
+            <div className="border border-l-4 border-emerald-500 bg-slate-800/50 p-4 rounded-md">
               <p className="font-medium text-slate-100">{payload.parkingName}</p>
               <p className="text-slate-300">{payload.parkingAddress}</p>
               <div className="mt-4">
@@ -100,7 +98,7 @@ export default async function PlanPage({
         {payload.diningName && (
           <section className="border-t pt-6">
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Dining Information</h3>
-            <div className="border border-slate-700 border-l-4 border-emerald-500 bg-slate-800/50 p-4 rounded-md">
+            <div className="border border-l-4 border-emerald-500 bg-slate-800/50 p-4 rounded-md">
               <p className="font-medium text-slate-100">{payload.diningName}</p>
               <p className="text-slate-300">{payload.diningAddress}</p>
               <div className="mt-4">

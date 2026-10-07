@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import {
   ArrowUpDown,
   ArrowUp,
@@ -66,17 +67,17 @@ export function EventDataTable() {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="h-[440px] flex flex-col bg-surface-card/40">
+      <div className="h-110 flex flex-col bg-surface-card/40">
         {/* Scrollable Table Viewport with Sticky Header */}
         <div className="flex-1 overflow-y-auto dark-scrollbar">
           <Table>
-            <TableHeader className="bg-[#0f172a] border-b border-border-muted shadow-sm">
+            <TableHeader className="bg-surface-card border-b border-border-muted shadow-sm">
               <TableRow className="border-border-muted hover:bg-transparent">
-                <TableHead className="sticky top-0 z-20 bg-[#0f172a] w-12 text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-surface-card w-12 text-slate-300 font-semibold text-xs">
                   #
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('title')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -85,7 +86,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('venue')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -94,7 +95,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('city')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -103,7 +104,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('date')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -112,7 +113,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('popularity')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -121,11 +122,11 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   Tags
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-[#0f172a] text-right text-slate-300 font-semibold text-xs w-28">
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-right text-slate-300 font-semibold text-xs w-28">
                   <button
                     onClick={() => setSorting('price')}
                     className="group inline-flex items-center justify-end hover:text-white transition-colors ml-auto cursor-pointer"
@@ -164,9 +165,11 @@ export function EventDataTable() {
                       <TableCell className="font-medium text-slate-100">
                         <div className="flex items-center gap-3">
                           <div className="relative shrink-0">
-                            <img
+                            <Image
                               src={event.imageUrl}
                               alt={event.title}
+                              width={400}
+                              height={400}
                               className="h-8 w-8 rounded-full object-cover border border-slate-700"
                             />
                             {event.imageAttribution && (
@@ -185,7 +188,7 @@ export function EventDataTable() {
                               </Tooltip>
                             )}
                           </div>
-                          <span className="truncate max-w-[240px]">
+                          <span className="truncate max-w-60">
                             {event.title}
                           </span>
                         </div>
@@ -303,7 +306,7 @@ export function EventDataTable() {
 
           {/* Centered Empty State inside the Full-Height 440px Container */}
           {filteredEvents.length === 0 && (
-            <div className="h-[360px] flex flex-col items-center justify-center text-center px-6 space-y-3">
+            <div className="h-90 flex flex-col items-center justify-center text-center px-6 space-y-3">
               <div className="h-10 w-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400">
                 <SearchX className="h-5 w-5" />
               </div>

@@ -218,7 +218,7 @@ export function WeatherDensityMatrix() {
                 <TooltipContent
                   side="top"
                   sideOffset={8}
-                  className="flex flex-col items-stretch min-w-[190px] bg-surface-card border border-slate-700 text-slate-100 p-3 space-y-2 font-sans shadow-xl"
+                  className="flex flex-col items-stretch min-w-47.5 bg-surface-card border border-slate-700 text-slate-100 p-3 space-y-2 font-sans shadow-xl"
                 >
                   {/* Row 1: Header */}
                   <div className="flex items-center justify-between border-b border-border-muted pb-1.5">

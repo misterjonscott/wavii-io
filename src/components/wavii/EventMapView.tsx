@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
+import Image from 'next/image';
 import Map, { MapRef, Marker } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import useSupercluster from 'use-supercluster';
@@ -167,7 +168,7 @@ export function EventMapView() {
   return (
     <TooltipProvider delayDuration={120}>
       <div
-        className="grid grid-cols-1 lg:grid-cols-12 h-[440px]"
+        className="grid grid-cols-1 lg:grid-cols-12 h-110"
         onClick={() => clearSpiderfiedCluster()}
       >
         {/* Left 7 Columns: Real 60fps WebGL Dark-Mode Street Map */}
@@ -265,7 +266,7 @@ export function EventMapView() {
                                 }`}
                               >
                                 <div
-                                  className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-medium whitespace-nowrap transition-all shadow-xl max-w-[180px] truncate ${
+                                  className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-medium whitespace-nowrap transition-all shadow-xl max-w-45 truncate ${
                                     isSelected
                                       ? 'bg-purple-600 text-white border-2 border-teal-300 shadow-purple-500/40'
                                       : 'bg-surface-card/95 text-teal-300 border border-teal-500/60 hover:bg-teal-950 hover:text-white hover:border-teal-300'
@@ -304,7 +305,7 @@ export function EventMapView() {
                     }`}
                   >
                     <div
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-medium whitespace-nowrap transition-all shadow-xl max-w-[180px] truncate ${
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-medium whitespace-nowrap transition-all shadow-xl max-w-45 truncate ${
                         isSelected
                           ? 'bg-purple-600 text-white border-2 border-teal-300 shadow-purple-500/40'
                           : 'bg-surface-card/95 text-teal-300 border border-teal-500/60 hover:bg-teal-950 hover:text-white hover:border-teal-300'
@@ -411,7 +412,7 @@ export function EventMapView() {
                             : 'bg-surface-card/60 hover:bg-surface-card text-slate-200 border border-border-muted/80'
                         }`}
                       >
-                        <img
+                        <Image
                           src={event.imageUrl}
                           alt={event.title}
                           className="w-24 h-20 object-cover rounded-md shrink-0"
@@ -591,12 +592,12 @@ export function EventMapView() {
                   </div>
 
                   <div className="relative h-36 w-full rounded-lg overflow-hidden border border-border-muted">
-                    <img
+                    <Image
                       src={activeEvent.imageUrl}
                       alt={activeEvent.title}
                       className="w-full h-full object-cover transition-all duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/30 to-transparent" />
                     <div className="absolute bottom-2.5 left-3 right-3 flex items-end justify-between">
                       <div>
                         <div className="flex flex-wrap gap-1.5 mb-1">

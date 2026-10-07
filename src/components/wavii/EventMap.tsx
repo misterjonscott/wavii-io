@@ -42,7 +42,7 @@ export function EventMap() {
             <div className="px-2 py-0.5 rounded bg-purple-600 text-white text-[10px] font-mono font-bold shadow-lg border border-teal-300">
               {selectedEvent?.venueName || 'Venue'}
             </div>
-            <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-purple-600" />
+            <div className="w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-[4px] border-t-purple-600" />
           </div>
         </Marker>
       </Map>
