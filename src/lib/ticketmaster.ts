@@ -11,7 +11,9 @@ export interface TicketmasterRawEvent {
   url: string;
   dates: {
     start: {
-      dateTime: string;
+      localDate?: string;
+      localTime?: string;
+      dateTime?: string;
     };
   };
   _embedded? : {
@@ -46,6 +48,15 @@ export interface TicketmasterRawEvent {
         genre? : {
           name: string;
         };
+        subGenre?: {
+          name: string;
+        };
+        type?: {
+          name: string;
+        };
+        subType?: {
+          name: string;
+        };
       }>;
     }>;
   };
@@ -60,7 +71,15 @@ export interface TicketmasterRawEvent {
     genre? : {
       name: string;
     };
-  }>;
+    subGenre?: {
+      name: string;
+    };
+    type?: {
+      name: string;
+    };
+    subType?: {
+      name: string;
+    };  }>;
   priceRanges? : Array<{
     type: string;
     currency: string;
@@ -71,18 +90,35 @@ export interface TicketmasterRawEvent {
 }
 
 function mapTicketmasterTaxonomy(
-  classifications? : Array<{ segment? : { name: string }; genre? : { name: string } }>,
+  classifications? : Array<{
+    segment? : { name: string };
+    genre? : { name: string };
+    subGenre?: { name: string };
+    type?: { name: string };
+    subType?: { name: string };
+  }>,
+  eventTitle: string,
 ): EventTaxonomy {
-  if (!classifications || classifications.length === 0) return 'concert';
+  if (!classifications || classifications.length === 0) {
+    const titleLower = eventTitle.toLowerCase();
+    if (['family', 'children', 'circus', 'magic', 'ice shows', 'disney', 'monster jam', 'globetrotters', 'paw patrol', 'kidz bop'].some(keyword => titleLower.includes(keyword))) return 'family';
+    if (['theater', 'theatre', 'broadway', 'musical', 'opera', 'ballet', 'dance', 'comedy'].some(keyword => titleLower.includes(keyword))) return 'theater';
+    if (['sports', 'basketball', 'football', 'baseball', 'hockey', 'soccer', 'wrestling', 'motorsports', 'rodeo'].some(keyword => titleLower.includes(keyword))) return 'sports';
+    return 'concert';
+  }
 
   const combined = classifications
-    .map((c) => `${c.segment?.name || ''} ${c.genre?.name || ''}`)
+    .map((c) =>
+      `${c.segment?.name || ''} ${c.genre?.name || ''} ${c.subGenre?.name || ''} ${c.type?.name || ''} ${c.subType?.name || ''}`,
+    )
     .join(' ')
     .toLowerCase();
 
-  if (combined.includes('family')) return 'family';
-  if (combined.includes('theater') || combined.includes('broadway')) return 'theater';
-  if (combined.includes('sports')) return 'sports';
+  const searchString = `${combined} ${eventTitle.toLowerCase()}`;
+
+  if (['family', 'children', 'circus', 'magic', 'ice shows', 'disney', 'monster jam', 'globetrotters', 'paw patrol', 'kidz bop'].some(keyword => searchString.includes(keyword))) return 'family';
+  if (['theater', 'theatre', 'broadway', 'musical', 'opera', 'ballet', 'dance', 'comedy'].some(keyword => searchString.includes(keyword))) return 'theater';
+  if (['sports', 'basketball', 'football', 'baseball', 'hockey', 'soccer', 'wrestling', 'motorsports', 'rodeo'].some(keyword => searchString.includes(keyword))) return 'sports';
   return 'concert';
 }
 
@@ -100,7 +136,7 @@ export function normalizeTicketmasterEvents(
       raw.images?.[0] ||
       attraction?.images?.[0];
 
-    const taxonomy = mapTicketmasterTaxonomy(raw.classifications || attraction?.classifications);
+    const taxonomy = mapTicketmasterTaxonomy(raw.classifications || attraction?.classifications, raw.name);
     const dt = new Date(raw.dates?.start?.dateTime || '');
 
     const formattedDate =
@@ -133,13 +169,15 @@ export function normalizeTicketmasterEvents(
     const popularityScore = raw.popularity ? Math.round(raw.popularity * 100) : 75; // Default or derived
 
     return {
-      id: parseInt(raw.id) || idx, // Convert string ID to number, or use index as fallback
+      id: Math.abs(raw.id.split('').reduce((acc, char) => ((acc << 5) - acc) + char.charCodeAt(0), 0)) || (100000 + idx),
       title: raw.name || 'Untitled Event',
       venueName: venue?.name || 'Unknown Venue',
       cityState: `${venue?.city?.name || 'Unknown City'}${
         venue?.state?.stateCode ? `, ${venue.state.stateCode}` : ''
       }`,
-      datetimeLocal: raw.dates?.start?.dateTime || '',
+      datetimeLocal: raw.dates?.start?.localDate
+        ? `${raw.dates.start.localDate}T${raw.dates.start.localTime || '19:00:00'}`
+        : raw.dates?.start?.dateTime || '',
       formattedDate,
       taxonomy,
       tags,
