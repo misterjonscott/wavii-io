@@ -2,6 +2,7 @@
 
 ## 1. Core Architectural Patterns
 - **The Adapter Pattern (`src/lib/adapters.ts`):** We never let raw third-party JSON bleed into the UI. Normalize messy SeatGeek payloads into strict `WaviiEvent` objects, apply intelligent taxonomy mapping, and handle duplicate/missing performer images using deterministic taxonomy-based fallbacks.
+- **The Deduplication Utility (`src/lib/deduplicator.ts`):** Merges events from multiple sources (SeatGeek, Ticketmaster) based on a generated hash, combining ticketing options and resolving image conflicts.
 - **Zero-Config Server Proxy (`src/app/api/events/route.ts`):** The SeatGeek API is proxied through a Next.js server route to keep the `SEATGEEK_CLIENT_ID` secure. It gracefully falls back to `MOCK_EVENTS` if the API key is missing.
 - **Centralized Reactive Store (`src/store/useWaviiStore.ts`):** Zustand controls all global state. `useFilteredEvents()` applies an 8-layer waterfall filter locally. Uses `persist` middleware for saving bookmarked events.
 

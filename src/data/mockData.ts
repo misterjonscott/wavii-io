@@ -30,7 +30,7 @@ export const TAXONOMY_STYLES: Record<
   },
 };
 
-export const MOCK_EVENTS: WaviiEvent[] = [
+const MOCK_EVENTS_WITHOUT_SOURCE: Omit<WaviiEvent, 'source' | 'ticketingOptions'>[] = [
   {
     id: 18354358,
     title: 'Pink Talking Fish',
@@ -206,6 +206,12 @@ export const MOCK_EVENTS: WaviiEvent[] = [
     popularityScore: 72,
   },
 ];
+
+export const MOCK_EVENTS: WaviiEvent[] = MOCK_EVENTS_WITHOUT_SOURCE.map((event) => ({
+  ...event,
+  source: 'seatgeek',
+  ticketingOptions: [{ source: 'seatgeek', url: event.seatgeekUrl }],
+}));
 
 export const MOCK_WEATHER_DENSITY: DailyWeatherAndDensity[] = [
   { dateIso: '2026-12-27', day: 'Sunday', shortDay: 'Sun', weatherCode: 'sun', highTemp: 86, lowTemp: 65, precipChance: 22, concerts: 8, family: 6, theater: 5, sports: 7, aqi: 42, sunsetTime: '2026-12-27T17:25:00' },

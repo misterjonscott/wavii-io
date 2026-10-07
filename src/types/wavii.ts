@@ -58,6 +58,74 @@ export interface SeatGeekRawEvent {
 }
 
 /**
+ * Raw Ticketmaster API v2 Payload Subset
+ */
+export interface TicketmasterRawEvent {
+  id: string;
+  name: string;
+  url: string;
+  dates: {
+    start: {
+      dateTime: string;
+    };
+  };
+  _embedded? : {
+    events?: TicketmasterRawEvent[];
+    venues? : Array<{
+      name: string;
+      city: {
+        name: string;
+      };
+      state? : {
+        name: string;
+        stateCode: string;
+      };
+      address? : {
+        line1: string;
+      };
+      location: {
+        latitude: string;
+        longitude: string;
+      };
+    }>;
+    attractions? : Array<{
+      name: string;
+      images? : Array<{
+        url: string;
+        ratio: string; // e.g., "16_9", "3_2"
+      }>;
+      classifications? : Array<{
+        segment? : {
+          name: string;
+        };
+        genre? : {
+          name: string;
+        };
+      }>;
+    }>;
+  };
+  images? : Array<{
+    url: string;
+    ratio: string; // e.g., "16_9", "3_2"
+  }>;
+  classifications? : Array<{
+    segment? : {
+      name: string;
+    };
+    genre? : {
+      name: string;
+    };
+  }>;
+  priceRanges? : Array<{
+    type: string;
+    currency: string;
+    min: number;
+    max: number;
+  }>;
+  popularity? : number; // Not directly available, can be derived or set to a default
+}
+
+/**
  * Raw Open-Meteo 7-Day Forecast Payload
  */
 export interface OpenMeteoRawDaily {
@@ -93,6 +161,8 @@ export interface WaviiEvent {
   imageUrl: string;
   imageAttribution?: string | null;
   seatgeekUrl: string;
+  source: 'seatgeek' | 'ticketmaster' | 'mixed';
+  ticketingOptions: { source: string, url: string }[];
   lat: number;
   lon: number;
   estimatedPrice: number; // Derived from stats.lowest_price or popularity score fallback

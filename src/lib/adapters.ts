@@ -31,7 +31,7 @@ const SPECIAL_CASES: Record<string, string> = {
   rnb: 'RnB',
 };
 
-function formatTag(t: string): string {
+export function formatTag(t: string): string {
   if (!t) return '';
   return t
     .split(/\s+/)
@@ -338,6 +338,8 @@ export function normalizeSeatGeekEvents(
       imageUrl: resolvedImage,
       imageAttribution: primaryPerformer?.image_rights_message || null,
       seatgeekUrl: raw.url || 'https://seatgeek.com',
+      source: 'seatgeek',
+      ticketingOptions: [{ source: 'seatgeek', url: raw.url || 'https://seatgeek.com' }],
       lat,
       lon,
       estimatedPrice,

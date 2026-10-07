@@ -18,6 +18,7 @@ import { TAXONOMY_STYLES } from '@/data/mockData';
 import { getEnvironmentalTags } from '@/lib/adapters';
 import { Button } from '@/components/ui/button';
 import { EventMap } from '@/components/wavii/EventMap';
+import Image from 'next/image';
 
 function getMiles(
   lat1: number,
@@ -205,7 +206,7 @@ export function EventDetail() {
     if (selectedDining?.displayName?.text) {
       description += `\nDining: ${selectedDining.displayName.text}`;
     }
-    description += `\nFind tickets and details on Wavii.io: ${activeEvent.seatgeekUrl}`;
+    description += `\nFind tickets and details on Wavii.io: ${activeEvent.ticketingOptions[0]?.url || ''}`;
 
     const icsContent = [
       'BEGIN:VCALENDAR',
@@ -258,7 +259,7 @@ export function EventDetail() {
     }
     const encodedLocation = encodeURIComponent(location);
 
-    const details = encodeURIComponent(`Find tickets and details on Wavii.io: ${activeEvent.seatgeekUrl}`);
+    const details = encodeURIComponent(`Find tickets and details on Wavii.io: ${activeEvent.ticketingOptions[0]?.url || ''}`);
 
     const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dtstart}/${dtend}&location=${encodedLocation}&details=${details}`;
     
@@ -273,7 +274,7 @@ export function EventDetail() {
       eventTitle: activeEvent.title,
       eventDate: activeEvent.formattedDate,
       venueName: activeEvent.venueName,
-      ticketUrl: activeEvent.seatgeekUrl,
+      ticketUrl: activeEvent.ticketingOptions[0]?.url || '',
       ...(selectedParking && {
         parkingName: selectedParking.displayName?.text,
         parkingAddress: selectedParking.formattedAddress,
@@ -309,12 +310,12 @@ export function EventDetail() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full">
         {/* Left Column (Visuals - col-span-4) */}
         <div className="w-full aspect-square md:h-full md:col-span-4 relative rounded-lg overflow-hidden border border-border-muted">
-          <img
+          <Image
             src={activeEvent.imageUrl}
             alt={activeEvent.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 via-transparent to-transparent" />
           <span className="absolute top-3 right-3 bg-emerald-500 text-slate-950 font-mono font-bold text-xs px-3 py-1 rounded-md shadow-lg">
             From ${activeEvent.estimatedPrice}
           </span>
@@ -395,18 +396,26 @@ export function EventDetail() {
 
           {/* Bottom: Pin primary "Find Tickets on SeatGeek" CTA button */}
           <div className="pt-2">
-            <Button
-              asChild
-              className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold h-10 text-sm shadow-lg shadow-purple-900/30 cursor-pointer"
-            >
-              <a
-                href={activeEvent.seatgeekUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Find Tickets on SeatGeek <ExternalLink className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {activeEvent.ticketingOptions.map((option, index) => {
+                const isSeatGeek = option.source === 'seatgeek';
+                const buttonText = `Tickets (${option.source === 'seatgeek' ? 'SeatGeek' : 'Ticketmaster'})`;
+                const buttonClass = isSeatGeek
+                  ? "bg-purple-600 hover:bg-purple-500 shadow-purple-900/30"
+                  : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/30"; // Distinct blue for Ticketmaster
+                return (
+                  <Button
+                    key={index}
+                    asChild
+                    className={`flex-1 min-w-37.5 ${buttonClass} text-white font-semibold h-10 text-sm shadow-lg cursor-pointer`}
+                  >
+                    <a href={option.url} target="_blank" rel="noreferrer">
+                      {buttonText} <ExternalLink className="ml-2 h-4 w-4" />
+                    </a>
+                  </Button>
+                );
+              })}
+            </div>
 
             {/* Secondary Utility Buttons */}
             <div className="flex gap-4 w-full mt-4">
@@ -442,7 +451,7 @@ export function EventDetail() {
           </div>
 
           {/* Middle: Live Weather & Sunset Data Card */}
-          <div className="flex-1 min-h-[80px] rounded-lg border border-border-muted bg-surface-card/90 p-3 flex flex-col justify-center text-xs">
+          <div className="flex-1 min-h-20 rounded-lg border border-border-muted bg-surface-card/90 p-3 flex flex-col justify-center text-xs">
             {isBeyond14Days ? (
               <p className="text-xs text-slate-400 text-center font-medium">
                 Forecast available 14 days prior to event.
@@ -564,8 +573,8 @@ export function EventDetail() {
                     {place.location?.latitude !== undefined && place.location?.longitude !== undefined && (
                       <p className="text-xs text-slate-400">
                         {getMiles(
-                          activeEvent.lat,
-                          activeEvent.lon,
+                          activeEvent?.lat,
+                          activeEvent?.lon,
                           place.location.latitude,
                           place.location.longitude
                         )}{' '}
@@ -637,7 +646,7 @@ export function EventDetail() {
             <span className="font-semibold text-white">Your Itinerary:</span>
             {activeEvent && (
               <span className="flex items-center gap-1.5 mt-1">
-                <ExternalLink className="h-4 w-4 text-purple-400" /> {activeEvent.title}
+                <ExternalLink className="h-4 w-4 text-purple-400" /> {activeEvent?.title}
               </span>
             )}
             {selectedParking && (
