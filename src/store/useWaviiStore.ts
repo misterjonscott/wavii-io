@@ -128,8 +128,8 @@ export const useWaviiStore = create<WaviiState>()(
       onlyDryNights: false,
       minHypeScore: 0,
       selectedEventId: null,
-      sortField: 'popularity',
-      sortOrder: 'desc',
+      sortField: 'date',
+      sortOrder: 'asc',
       isPlannerOpen: false,
       plannerTab: 'parking',
       placesData: {
@@ -238,8 +238,8 @@ export const useWaviiStore = create<WaviiState>()(
           selectedCities: [],
           onlyDryNights: false,
           minHypeScore: 0,
-          sortField: 'popularity',
-          sortOrder: 'desc',
+          sortField: 'date',
+          sortOrder: 'asc',
         }),
 
       hydrateLiveData: async () => {

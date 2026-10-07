@@ -11,6 +11,7 @@ import {
   Info,
   SearchX,
   RotateCcw,
+  Loader2,
 } from 'lucide-react';
 import { useWaviiStore, useFilteredEvents } from '@/store/useWaviiStore';
 import { SortField } from '@/types/wavii';
@@ -48,9 +49,13 @@ export function EventDataTable() {
     toggleSaveEvent,
     toggleTagToken,
     resetFilters,
+    isHydrating,
+    events,
   } = useWaviiStore();
 
   const filteredEvents = useFilteredEvents();
+
+  const isInitializing = isHydrating || events.length === 0;
 
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -306,28 +311,49 @@ export function EventDataTable() {
 
           {/* Centered Empty State inside the Full-Height 440px Container */}
           {filteredEvents.length === 0 && (
-            <div className="h-90 flex flex-col items-center justify-center text-center px-6 space-y-3">
-              <div className="h-10 w-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400">
-                <SearchX className="h-5 w-5" />
+            isInitializing ? (
+              <div className="h-90 flex flex-col items-center justify-center text-center px-6 space-y-3">
+                <div className="h-12 w-12 rounded-full bg-purple-950/60 border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-lg shadow-purple-950/50">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+                <div className="space-y-1 max-w-sm">
+                  <p className="text-sm font-semibold text-slate-200">
+                    Aggregating live event feeds...
+                  </p>
+                  <p className="text-xs text-slate-400 max-w-sm">
+                    Normalizing primary & resale inventory from Ticketmaster and SeatGeek and syncing local weather forecasts.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                  <span className="bg-slate-800/80 border border-slate-700/60 text-[11px] text-slate-400 px-2.5 py-1 rounded-full animate-pulse">Ticketmaster Discovery</span>
+                  <span className="bg-slate-800/80 border border-slate-700/60 text-[11px] text-slate-400 px-2.5 py-1 rounded-full animate-pulse">SeatGeek Resale</span>
+                  <span className="bg-slate-800/80 border border-slate-700/60 text-[11px] text-slate-400 px-2.5 py-1 rounded-full animate-pulse">Open-Meteo 7-Day</span>
+                </div>
               </div>
-              <div className="space-y-1 max-w-md">
-                <p className="text-sm font-semibold text-slate-200">
-                  No events match your active filter tokens
-                </p>
-                <p className="text-xs text-slate-400">
-                  Try removing a filter pill above, expanding your mile radius,
-                  or clearing all active filters.
-                </p>
+            ) : (
+              <div className="h-90 flex flex-col items-center justify-center text-center px-6 space-y-3">
+                <div className="h-10 w-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400">
+                  <SearchX className="h-5 w-5" />
+                </div>
+                <div className="space-y-1 max-w-md">
+                  <p className="text-sm font-semibold text-slate-200">
+                    No events match your active filter tokens
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Try removing a filter pill above, expanding your mile radius,
+                    or clearing all active filters.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetFilters}
+                  className="bg-purple-950/50 border-purple-500/50 text-purple-200 hover:bg-purple-900/60 hover:text-white text-xs h-8"
+                >
+                  <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Clear active filters
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetFilters}
-                className="bg-purple-950/50 border-purple-500/50 text-purple-200 hover:bg-purple-900/60 hover:text-white text-xs h-8"
-              >
-                <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Clear active filters
-              </Button>
-            </div>
+            )
           )}
         </div>
 
