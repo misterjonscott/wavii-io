@@ -44,6 +44,7 @@ interface WaviiState {
   onlyDryNights: boolean;
   minHypeScore: number;
   selectedEventId: number | null;
+  plannedEventId: number | null;
   sortField: SortField;
   sortOrder: SortOrder;
   isPlannerOpen: boolean;
@@ -75,6 +76,7 @@ interface WaviiState {
   toggleOnlyDryNights: () => void;
   toggleMinHypeScore: () => void;
   setSelectedEventId: (id: number | null) => void;
+  clearItinerary: () => void;
   setSorting: (field: SortField) => void;
   resetFilters: () => void;
   hydrateLiveData: () => Promise<void>;
@@ -128,6 +130,7 @@ export const useWaviiStore = create<WaviiState>()(
       onlyDryNights: false,
       minHypeScore: 0,
       selectedEventId: null,
+      plannedEventId: null,
       sortField: 'date',
       sortOrder: 'asc',
       isPlannerOpen: false,
@@ -193,16 +196,13 @@ export const useWaviiStore = create<WaviiState>()(
         })),
 
       setSelectedEventId: (selectedEventId) =>
-        set({
+        set((state) => ({
           selectedEventId,
-          ...(selectedEventId === null
-            ? {
-                isPlannerOpen: false,
-                selectedParking: null,
-                selectedDining: null,
-              }
+          ...(selectedEventId !== state.selectedEventId
+            ? { placesData: { parking: [], dining: [] } }
             : {}),
-        }),
+          ...(selectedEventId === null ? { isPlannerOpen: false } : {}),
+        })),
 
       setIsPlannerOpen: (isPlannerOpen) => set({ isPlannerOpen }),
       setPlannerOpen: (isPlannerOpen) => set({ isPlannerOpen }),
@@ -214,8 +214,50 @@ export const useWaviiStore = create<WaviiState>()(
             [tab]: data,
           },
         })),
-      setSelectedParking: (selectedParking) => set({ selectedParking }),
-      setSelectedDining: (selectedDining) => set({ selectedDining }),
+      setSelectedParking: (selectedParking) =>
+        set((state) => {
+          const isSwitchingEvent =
+            selectedParking !== null &&
+            state.plannedEventId !== null &&
+            state.plannedEventId !== state.selectedEventId;
+          const nextDining = isSwitchingEvent ? null : state.selectedDining;
+          const nextPlannedId =
+            selectedParking !== null
+              ? state.selectedEventId
+              : nextDining
+                ? state.plannedEventId
+                : null;
+          return {
+            selectedParking,
+            selectedDining: nextDining,
+            plannedEventId: nextPlannedId,
+          };
+        }),
+      setSelectedDining: (selectedDining) =>
+        set((state) => {
+          const isSwitchingEvent =
+            selectedDining !== null &&
+            state.plannedEventId !== null &&
+            state.plannedEventId !== state.selectedEventId;
+          const nextParking = isSwitchingEvent ? null : state.selectedParking;
+          const nextPlannedId =
+            selectedDining !== null
+              ? state.selectedEventId
+              : nextParking
+                ? state.plannedEventId
+                : null;
+          return {
+            selectedDining,
+            selectedParking: nextParking,
+            plannedEventId: nextPlannedId,
+          };
+        }),
+      clearItinerary: () =>
+        set({
+          selectedParking: null,
+          selectedDining: null,
+          plannedEventId: null,
+        }),
 
       setSorting: (field) =>
         set((state) => ({
@@ -251,21 +293,28 @@ export const useWaviiStore = create<WaviiState>()(
           let lon = -86.1581;
 
           try {
-            const position = await new Promise<GeolocationPosition>(
-              (resolve, reject) => {
-                if (!navigator.geolocation) {
-                  reject(new Error('Geolocation not supported'));
-                  return;
+            // 1. Check if we are in a secure context (HTTPS or localhost) before asking for location
+            if (typeof window !== 'undefined' && window.isSecureContext) {
+              const position = await new Promise<GeolocationPosition>(
+                (resolve, reject) => {
+                  if (!navigator.geolocation) {
+                    reject(new Error('Geolocation not supported'));
+                    return;
+                  }
+                  // 2. The 10000ms timeout ensures it eventually rejects if the user ignores the prompt
+                  navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    timeout: 10000,
+                    maximumAge: 60000,
+                  });
                 }
-                navigator.geolocation.getCurrentPosition(resolve, reject, {
-                  timeout: 10000,
-                  maximumAge: 60000,
-                });
-              }
-            );
-            lat = position.coords.latitude;
-            lon = position.coords.longitude;
-          } catch {
+              );
+              lat = position.coords.latitude;
+              lon = position.coords.longitude;
+            } else {
+              console.warn('Insecure context on local network: Geolocation blocked. Defaulting to Indy coordinates.');
+            }
+          } catch (err) {
+            console.warn('Geolocation failed or timed out, using defaults.', err);
             lat = 39.7684;
             lon = -86.1581;
           }
