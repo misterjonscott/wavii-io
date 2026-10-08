@@ -90,13 +90,13 @@ export interface TicketmasterRawEvent {
 }
 
 function mapTicketmasterTaxonomy(
-  classifications? : Array<{
+  classifications: Array<{
     segment? : { name: string };
     genre? : { name: string };
     subGenre?: { name: string };
     type?: { name: string };
     subType?: { name: string };
-  }>,
+  }> | undefined,
   eventTitle: string,
 ): EventTaxonomy {
   if (!classifications || classifications.length === 0) {
@@ -157,7 +157,8 @@ export function normalizeTicketmasterEvents(
       taxonomy
     );
     const categoryLabel = formatTag(taxonomy.charAt(0).toUpperCase() + taxonomy.slice(1));
-    const tags = Array.from(new Set([rawGenre, categoryLabel])).map(formatTag);
+    const normalizeSpelling = (t: string) => t.replace(/\bTheatre\b/gi, 'Theater');
+    const tags = Array.from(new Set([rawGenre, categoryLabel].map(formatTag).map(normalizeSpelling)));
 
     const lat = parseFloat(venue?.location?.latitude || '0');
     const lon = parseFloat(venue?.location?.longitude || '0');
@@ -166,7 +167,20 @@ export function normalizeTicketmasterEvents(
     const estimatedPrice = raw.priceRanges?.[0]?.min
       ? Math.round(raw.priceRanges[0].min)
       : 50; // Default or derived
-    const popularityScore = raw.popularity ? Math.round(raw.popularity * 100) : 75; // Default or derived
+    const venueLower = (venue?.name || '').toLowerCase();
+    const isMajorVenue = /stadium|arena|fieldhouse|amphitheat|ruoff|gainbridge|lucas oil|everwise|murat|old national/i.test(venueLower);
+    const attractionCount = raw._embedded?.attractions?.length || 0;
+    const maxTicketPrice = raw.priceRanges?.[0]?.max || 0;
+    const isWeekend = /^(fri|sat)/i.test(formattedDate);
+
+    const popularityScore = Math.min(
+      98,
+      50 +
+        (isMajorVenue ? 20 : 0) +
+        (attractionCount > 1 ? 12 : attractionCount === 1 ? 5 : 0) +
+        (maxTicketPrice >= 150 ? 12 : maxTicketPrice >= 75 ? 6 : 0) +
+        (isWeekend ? 6 : 0)
+    );
 
     return {
       id: Math.abs(raw.id.split('').reduce((acc, char) => ((acc << 5) - acc) + char.charCodeAt(0), 0)) || (100000 + idx),

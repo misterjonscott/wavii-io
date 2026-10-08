@@ -105,6 +105,11 @@ export function mergeEvents(events: WaviiEvent[]): WaviiEvent[] {
         // Merge logic
         // 1. Set source to 'mixed'
         canonicalEvent.source = 'mixed';
+        // Boost popularity score when an event is cross-listed on both primary & resale platforms
+        canonicalEvent.popularityScore = Math.min(
+          99,
+          Math.max(canonicalEvent.popularityScore, candidateEvent.popularityScore) + 12
+        );
 
         // 2. Merge ticketingOptions
         for (const newOption of candidateEvent.ticketingOptions) {

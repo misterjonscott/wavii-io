@@ -61,7 +61,11 @@ export function EventLogistics({
   setSelectedDining,
 }: EventLogisticsProps) {
   const plannerRef = useRef<HTMLDivElement | null>(null);
-  const fetchedTabs = useRef({ parking: false, dining: false });
+  const fetchedForEvent = useRef<{ eventId: number | null; parking: boolean; dining: boolean }>({
+    eventId: null,
+    parking: false,
+    dining: false,
+  });
 
   useEffect(() => {
     if (isPlannerOpen && plannerRef.current) {
@@ -70,21 +74,25 @@ export function EventLogistics({
   }, [isPlannerOpen, plannerTab]);
 
   useEffect(() => {
-    if (isPlannerOpen && activeEvent && !fetchedTabs.current[plannerTab]) {
-      fetchedTabs.current[plannerTab] = true;
+    if (!activeEvent) return;
+    if (fetchedForEvent.current.eventId !== activeEvent.id) {
+      fetchedForEvent.current = { eventId: activeEvent.id, parking: false, dining: false };
+    }
+    if (isPlannerOpen && !fetchedForEvent.current[plannerTab]) {
+      fetchedForEvent.current[plannerTab] = true;
 
       fetch(`/api/places?lat=${activeEvent.lat}&lon=${activeEvent.lon}&type=${plannerTab === 'dining' ? 'restaurant' : 'parking'}`)
         .then((res) => res.json())
         .then((data) => {
           const results = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-          setPlacesData(plannerTab, results); // Use the passed setPlacesData
+          setPlacesData(plannerTab, results);
         })
         .catch((err) => console.error('Places fetch error:', err));
     }
-  }, [isPlannerOpen, plannerTab, activeEvent, setPlacesData]); // Added setPlacesData to dependency array
+  }, [isPlannerOpen, plannerTab, activeEvent, setPlacesData]);
 
   return (
-    <div className="w-full mt-8 pt-8 border-t border-slate-800">
+    <div ref={plannerRef} className="w-full mt-8 pt-8 border-t border-slate-800">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           {plannerTab === 'parking' ? <Car className="h-5 w-5 text-purple-400" /> : <Utensils className="h-5 w-5 text-teal-400" />}
@@ -173,7 +181,7 @@ export function EventLogistics({
                   rel="noreferrer"
                   className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-colors border border-slate-700"
                 >
-                  <Navigation className="h-3.5 w-3.5 text-teal-400" /> Directions
+                  <Navigation className="h-3.5 w-3.5 text-teal-400" /> Walking Directions
                 </a>
               </div>
               <div className="mt-2">
@@ -203,7 +211,7 @@ export function EventLogistics({
                     (plannerTab === 'parking' && selectedParking?.googleMapsUri === place.googleMapsUri) ||
                     (plannerTab === 'dining' && selectedDining?.googleMapsUri === place.googleMapsUri)
                       ? 'Remove from Plan'
-                      : 'Add to Plan'
+                      : selectedParking || selectedDining ? 'Add to my plan' : 'Make a plan'
                   }
                 </Button>
               </div>

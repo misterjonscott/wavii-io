@@ -43,8 +43,27 @@ export function EventDetail() {
     selectedDining,
     setSelectedParking,
     setSelectedDining,
+    plannedEventId,
+    clearItinerary,
   } = useWaviiStore();
   const activeEvent = events.find((e) => e.id === selectedEventId);
+  const plannedEvent = events.find((e) => e.id === plannedEventId) || activeEvent;
+
+  // 1. Track if user clicked "Just Browse" on the current event conflict prompt
+  const [browsingEventId, setBrowsingEventId] = useState<number | null>(null);
+  const hasItineraryOnOtherEvent =
+    Boolean(selectedParking || selectedDining) &&
+    plannedEventId !== null &&
+    activeEvent !== undefined &&
+    plannedEventId !== activeEvent.id &&
+    browsingEventId !== activeEvent.id;
+
+  // 2. One-time interactive hint when Detail Panel opens (does NOT re-trigger on event switch)
+  const [showMapHint, setShowMapHint] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setShowMapHint(false), 3500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // The plannerRef and fetchedTabs are now local to EventLogistics, no longer needed here.
   // The useEffect for fetching places data is also moved to EventLogistics.
@@ -124,11 +143,37 @@ export function EventDetail() {
         onClick={() => {
           setSelectedEventId(null);
         }}
-        className='absolute top-4 right-4 z-20 p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700'
+        className='absolute top-4 right-4 z-20 p-1.5 rounded-full bg-rose-600 text-white transition-colors cursor-pointer border border-rose-500/40 shadow-sm'
         title='Close'
       >
         <X className='h-4 w-4' />
       </button>
+
+      {hasItineraryOnOtherEvent && plannedEvent && (
+        <div className='mb-5 mr-8 rounded-lg border border-amber-500/40 bg-amber-950/30 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs'>
+          <p className='text-amber-200'>
+            You have an active itinerary planned for{' '}
+            <strong className='text-white'>{plannedEvent.title}</strong>.
+          </p>
+          <div className='flex items-center gap-2'>
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={() => setBrowsingEventId(activeEvent.id)}
+              className='h-7 text-xs border-slate-600 bg-slate-900/80 text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer'
+            >
+              Just Browse
+            </Button>
+            <Button
+              size='sm'
+              onClick={() => clearItinerary()}
+              className='h-7 text-xs bg-rose-600 hover:bg-rose-500 text-white font-semibold cursor-pointer'
+            >
+              Clear Itinerary
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* 3-Column CSS Grid Layout */}
       <div className='grid grid-cols-1 md:grid-cols-12 gap-6 w-full'>
@@ -252,7 +297,7 @@ export function EventDetail() {
                   setPlannerTab('parking');
                 }}
               >
-                <Navigation className='mr-2 h-4 w-4 text-purple-400' /> Directions
+                <Navigation className='mr-2 h-4 w-4 text-purple-400' />
                 Parking Nearby
               </Button>
               <Button
@@ -263,7 +308,7 @@ export function EventDetail() {
                   setPlannerTab('dining');
                 }}
               >
-                <Navigation className='mr-2 h-4 w-4 text-teal-400' /> Directions
+                <Navigation className='mr-2 h-4 w-4 text-teal-400' />
                 Food & Drink
               </Button>
             </div>
@@ -273,8 +318,18 @@ export function EventDetail() {
         {/* Right Column (Context & Utilities - col-span-3) */}
         <div className='md:col-span-3 flex flex-col justify-between space-y-4'>
           {/* Top: Embed EventMap with fixed height (e.g. h-48) and rounded corners */}
-          <div className='h-48 w-full rounded-lg overflow-hidden border border-border-muted shrink-0'>
+          <div
+            onPointerDown={() => setShowMapHint(false)}
+            className='relative h-48 w-full rounded-lg overflow-hidden border border-border-muted shrink-0'
+          >
             <EventMap />
+            {showMapHint && (
+              <div className='pointer-events-none absolute inset-x-0 bottom-2.5 flex justify-center z-10 animate-fade-in'>
+                <span className='px-3 py-1 rounded-full bg-slate-950/85 border border-purple-500/50 text-[11px] font-medium text-purple-200 shadow-lg backdrop-blur-xs'>
+                  🖐️ Drag or scroll to explore map
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Middle: Live Weather & Sunset Data Card */}
@@ -322,7 +377,7 @@ export function EventDetail() {
               rel='noreferrer'
               className='inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition-colors border border-slate-700'
             >
-              <Navigation className='h-3.5 w-3.5 text-teal-400' /> Directions
+              <Navigation className='h-3.5 w-3.5 text-teal-400' /> Directions to Venue
             </a>
           </div>
         </div>
@@ -344,11 +399,26 @@ export function EventDetail() {
         />
       )}
 
-      {(selectedParking || selectedDining) && activeEvent && (
+      {(selectedParking || selectedDining) && plannedEvent && (
         <EventActionBar
-          activeEvent={activeEvent}
+          activeEvent={plannedEvent}
           selectedParking={selectedParking}
           selectedDining={selectedDining}
+          onRemoveParking={() => setSelectedParking(null)}
+          onRemoveDining={() => setSelectedDining(null)}
+          onClearItinerary={() => clearItinerary()}
+          onSelectEvent={() => {
+            if (selectedEventId !== plannedEvent.id) {
+              setSelectedEventId(plannedEvent.id);
+            }
+          }}
+          onSelectTab={(tab) => {
+            if (selectedEventId !== plannedEvent.id) {
+              setSelectedEventId(plannedEvent.id);
+            }
+            setPlannerOpen(true);
+            setPlannerTab(tab);
+          }}
         />
       )}
     </div>

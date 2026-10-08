@@ -135,7 +135,7 @@ export function mergeLiveWeatherWithDensity(
     const theater = dayEvents.filter((e) => e.taxonomy === 'theater').length;
     const sports = dayEvents.filter((e) => e.taxonomy === 'sports').length;
 
-    let aqi = 42;
+    let aqi: number | undefined = undefined;
     if (rawAirQuality?.hourly?.time && rawAirQuality?.hourly?.us_aqi) {
       const dayHours = rawAirQuality.hourly.time
         .map((t, i) => ({ t, aqi: rawAirQuality.hourly.us_aqi[i] }))
@@ -179,7 +179,7 @@ export function getEnvironmentalTags(
   const badges: EnvironmentalBadgeInfo[] = [];
   const eventDateIso = event.datetimeLocal.split('T')[0];
   const matchedDay =
-    weatherDensity.find((d) => d.dateIso === eventDateIso) || weatherDensity[0];
+    weatherDensity.find((d) => d.dateIso === eventDateIso);
 
   if (matchedDay && matchedDay.aqi !== undefined) {
     const aqi = matchedDay.aqi;
@@ -311,11 +311,14 @@ export function normalizeSeatGeekEvents(
     );
     const categoryLabel = formatTag(taxonomy.charAt(0).toUpperCase() + taxonomy.slice(1));
 
-    const tags = Array.from(new Set([rawGenre, categoryLabel])).map(formatTag);
+    const normalizeSpelling = (t: string) => t.replace(/\bTheatre\b/gi, 'Theater');
+    const tags = Array.from(new Set([rawGenre, categoryLabel].map(formatTag).map(normalizeSpelling)));
 
+    const rawScore = raw.score || raw.popularity || 0.45;
+    // Curve SeatGeek's 0..1 score: <0.52 stays <65 (no icon), 0.52..0.71 -> 65..84 (Sparkle), >=0.72 -> 85+ (HYPE)
     const popularityScore = Math.max(
-      65,
-      Math.min(99, Math.round((raw.score || raw.popularity || 0.78) * 100))
+      25,
+      Math.min(99, Math.round(rawScore * 115))
     );
 
     const estimatedPrice =

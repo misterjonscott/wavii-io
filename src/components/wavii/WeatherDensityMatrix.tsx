@@ -127,7 +127,7 @@ export function WeatherDensityMatrix() {
                 <button
                   key={item.id}
                   onClick={() => toggleCategoryShortcut(item.id)}
-                  className={`${item.bg} text-slate-950 px-2.5 py-1.5 font-semibold text-left transition-opacity ${
+                  className={`${item.bg} cursor-pointer text-slate-950 px-2.5 py-1.5 font-semibold text-left transition-opacity ${
                     isDimmed ? 'opacity-35 hover:opacity-75' : 'opacity-100'
                   }`}
                 >

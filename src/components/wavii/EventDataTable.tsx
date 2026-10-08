@@ -6,7 +6,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  DollarSign,
+  Flame,
+  Sparkles,
   Heart,
   Info,
   SearchX,
@@ -57,6 +58,38 @@ export function EventDataTable() {
 
   const isInitializing = isHydrating || events.length === 0;
 
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const {
+    selectedCategory,
+    selectedDay,
+    selectedCities,
+    searchQuery,
+    maxPrice,
+    distanceMiles,
+    onlyDryNights,
+    minHypeScore,
+    activeNavTab,
+  } = useWaviiStore();
+
+  React.useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [
+    selectedCategory,
+    selectedDay,
+    selectedTags,
+    selectedCities,
+    searchQuery,
+    maxPrice,
+    distanceMiles,
+    onlyDryNights,
+    minHypeScore,
+    activeNavTab,
+    sortField,
+    sortOrder,
+  ]);
+
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
       return (
@@ -74,11 +107,11 @@ export function EventDataTable() {
     <TooltipProvider delayDuration={150}>
       <div className="h-110 flex flex-col bg-surface-card/40">
         {/* Scrollable Table Viewport with Sticky Header */}
-        <div className="flex-1 overflow-y-auto dark-scrollbar">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto dark-scrollbar">
           <Table>
             <TableHeader className="bg-surface-card border-b border-border-muted shadow-sm">
               <TableRow className="border-border-muted hover:bg-transparent">
-                <TableHead className="sticky top-0 z-20 bg-surface-card w-12 text-slate-300 font-semibold text-xs">
+                <TableHead className="hidden md:table-cell sticky top-0 z-20 bg-surface-card w-10 text-slate-300 font-semibold text-xs">
                   #
                 </TableHead>
 
@@ -87,11 +120,11 @@ export function EventDataTable() {
                     onClick={() => setSorting('title')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
                   >
-                    Title {renderSortIcon('title')}
+                    Event {renderSortIcon('title')}
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
+                <TableHead className="hidden md:table-cell sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('venue')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -100,16 +133,16 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
+                <TableHead className="hidden lg:table-cell sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('city')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
                   >
-                    City/State {renderSortIcon('city')}
+                    City {renderSortIcon('city')}
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
+                <TableHead className="hidden sm:table-cell sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('date')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -118,26 +151,21 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-center text-slate-300 font-semibold text-xs w-20">
                   <button
                     onClick={() => setSorting('popularity')}
-                    className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
+                    className="group inline-flex items-center justify-center hover:text-white transition-colors cursor-pointer"
                   >
                     Hype {renderSortIcon('popularity')}
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
+                <TableHead className="hidden xl:table-cell sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   Tags
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-surface-card text-right text-slate-300 font-semibold text-xs w-28">
-                  <button
-                    onClick={() => setSorting('price')}
-                    className="group inline-flex items-center justify-end hover:text-white transition-colors ml-auto cursor-pointer"
-                  >
-                    Actions {renderSortIcon('price')}
-                  </button>
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-right text-slate-300 font-semibold text-xs w-12 pr-3">
+                  Save
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -163,12 +191,12 @@ export function EventDataTable() {
                           : 'hover:bg-slate-800/50'
                       }`}
                     >
-                      <TableCell className="text-slate-400 font-medium">
+                      <TableCell className="hidden md:table-cell text-slate-400 font-medium w-10">
                         {idx + 1}
                       </TableCell>
 
-                      <TableCell className="font-medium text-slate-100">
-                        <div className="flex items-center gap-3">
+                      <TableCell className="font-medium text-slate-100 max-w-44 sm:max-w-60">
+                        <div className="flex items-center gap-2.5">
                           <div className="relative shrink-0">
                             <Image
                               src={event.imageUrl}
@@ -193,33 +221,61 @@ export function EventDataTable() {
                               </Tooltip>
                             )}
                           </div>
-                          <span className="truncate max-w-60">
-                            {event.title}
-                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-semibold text-slate-100">
+                              {event.title}
+                            </div>
+                            <div className="md:hidden truncate text-[11px] text-slate-400">
+                              {event.venueName} • {event.formattedDate}
+                            </div>
+                          </div>
                         </div>
                       </TableCell>
 
-                      <TableCell className="text-sm text-slate-300">
+                      <TableCell className="hidden md:table-cell text-xs text-slate-300 max-w-44 truncate">
                         {event.venueName}
                       </TableCell>
 
-                      <TableCell className="text-sm text-slate-300">
+                      <TableCell className="hidden lg:table-cell text-xs text-slate-300 whitespace-nowrap">
                         <span>{event.cityState}</span>
-                        <span className="ml-2 text-xs text-slate-400">
+                        <span className="ml-1.5 text-[11px] text-slate-400">
                           ({event.distanceMiles} mi)
                         </span>
                       </TableCell>
 
-                      <TableCell className="text-slate-300">
+                      <TableCell className="hidden sm:table-cell text-slate-300 whitespace-nowrap">
                         {event.formattedDate}
                       </TableCell>
 
-                      <TableCell className="text-purple-400 font-mono text-xs">
-                        {event.popularityScore}/100
+                      <TableCell className="text-center">
+                        {event.popularityScore > 75 ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs shadow-amber-500/10">
+                                <Flame className="h-3 w-3 fill-amber-400 text-amber-400" />
+                                HYPE
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-surface-card border-slate-700 text-slate-100 text-xs">
+                              High Demand ({event.popularityScore}/100)
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : event.popularityScore >= 65 ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center justify-center p-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                                <Sparkles className="h-3 w-3 text-purple-400" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-surface-card border-slate-700 text-slate-100 text-xs">
+                              Trending ({event.popularityScore}/100)
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : null}
                       </TableCell>
 
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1.5">
+                      <TableCell className="hidden xl:table-cell">
+                        <div className="flex flex-wrap gap-1">
                           {event.tags.map((tag) => {
                             const isTagActive = selectedTags.includes(tag);
                             return (
@@ -243,64 +299,34 @@ export function EventDataTable() {
                               </Badge>
                             );
                           })}
-                          {getEnvironmentalTags(event, weatherDensity)
-                            .filter((badge) => badge.type !== 'aqi' && badge.type !== 'sunset')
-                            .map((badge) => (
-                              <span
-                                key={badge.type}
-                                className={`px-2 py-0.5 text-[10px] rounded border ${badge.colorClass} font-medium`}
-                              >
-                                {badge.label}
-                              </span>
-                            ))}
                         </div>
                       </TableCell>
 
-                      <TableCell className="text-right">
-                        <div className="inline-flex items-center justify-end gap-1.5">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleSaveEvent(event.id);
-                                }}
-                                className={`inline-flex items-center justify-center h-6 w-6 rounded-full border transition-colors cursor-pointer ${
-                                  isSaved
-                                    ? 'border-rose-500/80 bg-rose-500/20 text-rose-400'
-                                    : 'border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-500/50'
+                      <TableCell className="text-right pr-3">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSaveEvent(event.id);
+                              }}
+                              className={`inline-flex items-center justify-center h-6 w-6 rounded-full border transition-colors cursor-pointer ${
+                                isSaved
+                                  ? 'border-rose-500/80 bg-rose-500/20 text-rose-400'
+                                  : 'border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-500/50'
+                              }`}
+                            >
+                              <Heart
+                                className={`h-3 w-3 ${
+                                  isSaved ? 'fill-rose-400' : ''
                                 }`}
-                              >
-                                <Heart
-                                  className={`h-3 w-3 ${
-                                    isSaved ? 'fill-rose-400' : ''
-                                  }`}
-                                />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-surface-card border-slate-700 text-slate-100 text-xs">
-                              {isSaved ? 'Remove from Saved' : 'Save Event'}
-                            </TooltipContent>
-                          </Tooltip>
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <a
-                                href={event.seatgeekUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-emerald-500/70 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                              >
-                                <DollarSign className="h-3.5 w-3.5" />
-                              </a>
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-surface-card border-slate-700 text-slate-100 text-xs">
-                              Est. from ${event.estimatedPrice} • View on
-                              SeatGeek
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
+                              />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-surface-card border-slate-700 text-slate-100 text-xs">
+                            {isSaved ? 'Remove from Saved' : 'Save Event'}
+                          </TooltipContent>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   );

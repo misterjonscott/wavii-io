@@ -28,6 +28,15 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
     maxPrice,
   } = useWaviiStore();
 
+  const tmOnlyCount = events.filter((e) => e.source === 'ticketmaster').length;
+  const sgOnlyCount = events.filter((e) => e.source === 'seatgeek').length;
+  const mergedCount = events.filter((e) => e.source === 'mixed').length;
+  const rawIngestedEstimate = events.length + mergedCount;
+  const collisionRate =
+    rawIngestedEstimate > 0
+      ? `${((mergedCount / rawIngestedEstimate) * 100).toFixed(1)}%`
+      : '0%';
+
   const activeStatePayload = {
     activeNavTab,
     originLat,
@@ -43,6 +52,18 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
     weatherSource,
     totalEventsLoaded: events.length,
     selectedEventId,
+    aggregationTelemetry: {
+      architecture: 'Promise.allSettled Concurrent BFF + Fuzzy Hash Deduplicator',
+      rawPayloadsIngested: rawIngestedEstimate,
+      uniqueNormalizedEvents: events.length,
+      crossProviderCollisionsMerged: mergedCount,
+      deduplicationRate: collisionRate,
+      sourceBreakdown: {
+        ticketmasterPrimaryOnly: tmOnlyCount,
+        seatgeekResaleOnly: sgOnlyCount,
+        dualMarketMerged: mergedCount,
+      },
+    },
   };
 
   const selectedEvent = events.find((e) => e.id === selectedEventId) || events[0] || {
@@ -62,7 +83,12 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
     estimatedPrice: 35,
     distanceMiles: 4.2,
     popularityScore: 84,
-    isHotThree: true
+    isHotThree: true,
+    source: 'mixed' as const,
+    ticketingOptions: [
+      { source: 'ticketmaster' as const, url: 'https://www.ticketmaster.com' },
+      { source: 'seatgeek' as const, url: 'https://seatgeek.com' },
+    ],
   };
 
   const targetId = selectedEvent.id;
@@ -125,6 +151,38 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
   const rawSeatGeekMock = rawSeatGeekPool.find((r) => r.id === targetId) || rawSeatGeekPool[0];
   const sanitizedEvent = selectedEvent;
 
+  const eventDate = selectedEvent.datetimeLocal.split('T')[0];
+  const venueKey = selectedEvent.venueName
+    .toLowerCase()
+    .replace(/\b(the|at|center|arena|stadium|theatre|theater|fieldhouse|music|amphitheatre|amphitheater|pavilion|hall|club|stage)\b/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .slice(0, 12);
+
+  const rawAdapterInspectionPayload = {
+    _deduplicationEngine: {
+      compositeHashKey: `${eventDate}-${venueKey}`,
+      resolutionStatus:
+        selectedEvent.source === 'mixed'
+          ? 'COLLISION_MERGED (Ticketmaster metadata prioritized + ticketingOptions combined)'
+          : `SINGLE_PROVIDER (${selectedEvent.source.toUpperCase()})`,
+    },
+    ...(selectedEvent.source === 'ticketmaster' || selectedEvent.source === 'mixed'
+      ? {
+          ticketmasterDiscoveryHalV2: {
+            name: selectedEvent.title,
+            dates: { start: { localDate: eventDate, dateTime: selectedEvent.datetimeLocal } },
+            classifications: [{ segment: { name: selectedEvent.taxonomy }, genre: { name: selectedEvent.tags[0] || 'Live' } }],
+            _embedded: {
+              venues: [{ name: selectedEvent.venueName, city: { name: selectedEvent.cityState.split(',')[0] } }],
+            },
+          },
+        }
+      : {}),
+    ...(selectedEvent.source === 'seatgeek' || selectedEvent.source === 'mixed'
+      ? { seatGeekV2: rawSeatGeekMock }
+      : {}),
+  };
+
   const astExtractedTypeSpecs = {
     source: "src/types/wavii.ts",
     parser: "TypeScript AST / extract_component_spec",
@@ -144,6 +202,8 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
           imageUrl: "string (required)",
           imageAttribution: "string | null | undefined",
           seatgeekUrl: "string (required)",
+          source: "'seatgeek' | 'ticketmaster' | 'mixed' (required)",
+          ticketingOptions: "Array<{ source: string, url: string }> (required)",
           lat: "number (required)",
           lon: "number (required)",
           estimatedPrice: "number (required)",
@@ -159,7 +219,7 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
           dateIso: "string (required)",
           day: "string (required)",
           shortDay: "string (required)",
-          weatherCode: "\"sun\" | \"cloud\" | \"rain\" | \"snow\" (required)",
+          weatherCode: "'sun' | 'cloud' | 'rain' | 'snow' (required)",
           highTemp: "number (required)",
           lowTemp: "number (required)",
           precipChance: "number (required)",
@@ -241,6 +301,28 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
                 <Cpu className="h-3.5 w-3.5 text-emerald-400" />
                 <span>Live Zustand Store & Geolocation State</span>
               </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 font-sans">
+                <div className="bg-surface-card/80 border border-border-muted rounded-lg p-3">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-400">Raw Ingested</div>
+                  <div className="text-lg font-bold text-white mt-0.5">{rawIngestedEstimate}</div>
+                  <div className="text-[11px] text-slate-400">TM + SG Parallel Fetch</div>
+                </div>
+                <div className="bg-surface-card/80 border border-border-muted rounded-lg p-3">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-400">Unique Normalized</div>
+                  <div className="text-lg font-bold text-emerald-400 mt-0.5">{events.length}</div>
+                  <div className="text-[11px] text-slate-400">Active Store Contracts</div>
+                </div>
+                <div className="bg-surface-card/80 border border-border-muted rounded-lg p-3">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-400">Collisions Merged</div>
+                  <div className="text-lg font-bold text-purple-400 mt-0.5">{mergedCount} <span className="text-xs font-normal text-slate-400">({collisionRate})</span></div>
+                  <div className="text-[11px] text-slate-400">Dual-Market Events</div>
+                </div>
+                <div className="bg-surface-card/80 border border-border-muted rounded-lg p-3">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-400">Provider Split</div>
+                  <div className="text-sm font-bold text-slate-200 mt-1">TM: {tmOnlyCount} • SG: {sgOnlyCount}</div>
+                  <div className="text-[11px] text-slate-400">Primary vs. Resale</div>
+                </div>
+              </div>
               <div className="bg-surface-card/90 border border-border-muted rounded-lg p-4 overflow-x-auto shadow-inner">
                 <pre className="text-emerald-400 leading-relaxed">
                   {JSON.stringify(activeStatePayload, null, 2)}
@@ -259,12 +341,12 @@ export function DeveloperConsole({ onClose }: DeveloperConsoleProps) {
                 {/* Left Column: Raw SeatGeek */}
                 <div className="space-y-1.5 flex flex-col">
                   <div className="text-[11px] font-sans font-medium text-rose-400 flex items-center justify-between">
-                    <span>Raw SeatGeek API Payload (Nested & Verbose)</span>
+                    <span>Raw Provider Payload(s) & Deduplication Key</span>
                     <span className="text-[10px] text-slate-500 font-mono">External</span>
                   </div>
                   <div className="bg-surface-card/90 border border-border-muted rounded-lg p-4 overflow-x-auto flex-1 shadow-inner">
                     <pre className="text-rose-300/90 leading-relaxed">
-                      {JSON.stringify(rawSeatGeekMock, null, 2)}
+                      {JSON.stringify(rawAdapterInspectionPayload, null, 2)}
                     </pre>
                   </div>
                 </div>
