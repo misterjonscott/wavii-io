@@ -157,12 +157,11 @@ export default function WaviiDashboard() {
           {/* Unified Command Bar */}
           <section className="flex flex-wrap items-center gap-3">
             <Button
-              variant="outline"
               onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-              className={`h-9 text-xs transition-colors cursor-pointer ${
+              className={`h-9 text-xs font-semibold border transition-all cursor-pointer ${
                 isFilterMenuOpen
-                  ? 'bg-purple-950/60 border-purple-500 text-purple-100'
-                  : 'bg-surface-card border-border-muted text-slate-200 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-purple-600 border-purple-300 text-white hover:bg-purple-500 shadow-md shadow-purple-500/30'
+                  : 'bg-purple-950/50 border-purple-500/80 text-purple-200 hover:bg-purple-900/60 hover:border-purple-400 hover:text-white shadow-sm shadow-purple-500/20'
               }`}
             >
               Add filters{' '}
