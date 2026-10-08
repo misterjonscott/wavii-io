@@ -183,6 +183,7 @@ export function EventDetail() {
             src={activeEvent.imageUrl}
             alt={activeEvent.title}
             fill
+            sizes="(max-width: 768px) 100vw, 400px"
             className='w-full h-full object-cover'
           />
           <div className='absolute inset-0 bg-linear-to-t from-slate-950/80 via-transparent to-transparent' />

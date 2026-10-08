@@ -142,7 +142,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="hidden sm:table-cell sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
+                <TableHead className="sticky top-0 z-20 bg-surface-card text-slate-300 font-semibold text-xs">
                   <button
                     onClick={() => setSorting('date')}
                     className="group inline-flex items-center hover:text-white transition-colors cursor-pointer"
@@ -151,7 +151,7 @@ export function EventDataTable() {
                   </button>
                 </TableHead>
 
-                <TableHead className="sticky top-0 z-20 bg-surface-card text-center text-slate-300 font-semibold text-xs w-20">
+                <TableHead className="hidden sm:table-cell sticky top-0 z-20 bg-surface-card text-center text-slate-300 font-semibold text-xs w-20">
                   <button
                     onClick={() => setSorting('popularity')}
                     className="group inline-flex items-center justify-center hover:text-white transition-colors cursor-pointer"
@@ -226,7 +226,7 @@ export function EventDataTable() {
                               {event.title}
                             </div>
                             <div className="md:hidden truncate text-[11px] text-slate-400">
-                              {event.venueName} • {event.formattedDate}
+                              {event.venueName}
                             </div>
                           </div>
                         </div>
@@ -243,11 +243,11 @@ export function EventDataTable() {
                         </span>
                       </TableCell>
 
-                      <TableCell className="hidden sm:table-cell text-slate-300 whitespace-nowrap">
+                      <TableCell className="text-slate-300 whitespace-nowrap">
                         {event.formattedDate}
                       </TableCell>
 
-                      <TableCell className="text-center">
+                      <TableCell className="hidden sm:table-cell text-center">
                         {event.popularityScore > 75 ? (
                           <Tooltip>
                             <TooltipTrigger asChild>

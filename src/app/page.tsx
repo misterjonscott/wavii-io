@@ -155,10 +155,10 @@ export default function WaviiDashboard() {
           </header>
 
           {/* Unified Command Bar */}
-          <section className="flex flex-wrap items-center gap-3">
+          <section className="flex flex-wrap items-center justify-between sm:justify-start gap-3">
             <Button
               onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-              className={`h-9 text-xs font-semibold border transition-all cursor-pointer ${
+              className={`order-2 sm:order-none h-9 text-xs font-semibold border transition-all cursor-pointer ${
                 isFilterMenuOpen
                   ? 'bg-purple-600 border-purple-300 text-white hover:bg-purple-500 shadow-md shadow-purple-500/30'
                   : 'bg-purple-950/50 border-purple-500/80 text-purple-200 hover:bg-purple-900/60 hover:border-purple-400 hover:text-white shadow-sm shadow-purple-500/20'
@@ -172,8 +172,8 @@ export default function WaviiDashboard() {
               />
             </Button>
 
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-55">
+            {/* Search Input (Full width top row on mobile, inline flex-1 on desktop) */}
+            <div className="order-1 sm:order-none relative w-full sm:w-auto sm:flex-1 sm:min-w-55">
               <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               <Input
                 placeholder="Enter location, venue, or artist..."
@@ -184,7 +184,7 @@ export default function WaviiDashboard() {
             </div>
 
             {/* Max Price with Embedded '$' Prefix & Clean 'Any' Placeholder */}
-            <div className="flex items-center gap-2">
+            <div className="order-3 sm:order-none flex items-center gap-2">
               <span className="text-xs text-slate-300 font-medium whitespace-nowrap">
                 Max Price
               </span>
@@ -204,7 +204,7 @@ export default function WaviiDashboard() {
             </div>
 
             {/* Distance Select */}
-            <div className="flex items-center gap-2">
+            <div className="order-4 sm:order-none flex items-center gap-2">
               <span className="text-xs text-slate-300 font-medium">Distance</span>
               <Select
                 value={String(distanceMiles)}
@@ -223,7 +223,7 @@ export default function WaviiDashboard() {
             </div>
 
             {/* Type Select */}
-            <div className="flex items-center gap-2">
+            <div className="order-5 sm:order-none flex items-center gap-2">
               <span className="text-xs text-slate-300 font-medium">Type</span>
               <Select
                 value={selectedCategory}

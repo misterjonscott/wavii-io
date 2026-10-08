@@ -4,18 +4,21 @@ import './globals.css';
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-inter',
+  display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-mono',
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
 });
 
 const pacifico = Pacifico({
   weight: '400',
   subsets: ['latin'],
-  variable: '--font-logo',
+  variable: '--font-pacifico',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
