@@ -226,7 +226,7 @@ export function EventActionBar({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <Button
           size="sm"
           onClick={onClearItinerary}

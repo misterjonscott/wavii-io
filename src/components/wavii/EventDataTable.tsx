@@ -52,6 +52,8 @@ export function EventDataTable() {
     resetFilters,
     isHydrating,
     events,
+    selectedParking,
+    selectedDining,
   } = useWaviiStore();
 
   const filteredEvents = useFilteredEvents();
@@ -107,7 +109,14 @@ export function EventDataTable() {
     <TooltipProvider delayDuration={150}>
       <div className="h-110 flex flex-col bg-surface-card/40">
         {/* Scrollable Table Viewport with Sticky Header */}
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto dark-scrollbar">
+        <div
+          ref={scrollContainerRef}
+          className={`flex-1 overflow-y-auto dark-scrollbar transition-all duration-300 ${
+            selectedEventId !== null || selectedParking || selectedDining
+              ? 'pb-40 sm:pb-48'
+              : ''
+          }`}
+        >
           <Table>
             <TableHeader className="bg-surface-card border-b border-border-muted shadow-sm">
               <TableRow className="border-border-muted hover:bg-transparent">
