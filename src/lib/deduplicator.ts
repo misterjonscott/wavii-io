@@ -80,58 +80,81 @@ export function mergeEvents(events: WaviiEvent[]): WaviiEvent[] {
   for (const [groupKey, candidates] of eventGroups.entries()) {
     if (candidates.length === 0) continue;
 
-    const canonicalEvent = { ...candidates[0] }; // Clone the first event to be the canonical one
+    const finalGroupEvents: WaviiEvent[] = [{ ...candidates[0] }];
 
     for (let i = 1; i < candidates.length; i++) {
       const candidateEvent = candidates[i];
+      let merged = false;
 
-      const canonicalTitleWords = getSignificantWords(canonicalEvent.title);
-      const candidateTitleWords = getSignificantWords(candidateEvent.title);
+      for (const canonicalEvent of finalGroupEvents) {
+        const canonicalTitleWords = getSignificantWords(canonicalEvent.title);
+        const candidateTitleWords = getSignificantWords(candidateEvent.title);
 
-      const titlesShareSignificantWord = canonicalTitleWords.some(canonicalWord =>
-        candidateTitleWords.includes(canonicalWord)
-      );
-
-      const canonicalStartTime = new Date(canonicalEvent.datetimeLocal).getTime();
-      const candidateStartTime = new Date(candidateEvent.datetimeLocal).getTime();
-      const timeDifference = Math.abs(canonicalStartTime - candidateStartTime) / (1000 * 60 * 60); // Difference in hours
-
-      const sameVenueOnSameDay = (
-        canonicalEvent.venueName === candidateEvent.venueName &&
-        canonicalEvent.datetimeLocal.split('T')[0] === candidateEvent.datetimeLocal.split('T')[0]
-      );
-
-      if (titlesShareSignificantWord || (timeDifference <= 2 && sameVenueOnSameDay)) {
-        // Merge logic
-        // 1. Set source to 'mixed'
-        canonicalEvent.source = 'mixed';
-        // Boost popularity score when an event is cross-listed on both primary & resale platforms
-        canonicalEvent.popularityScore = Math.min(
-          99,
-          Math.max(canonicalEvent.popularityScore, candidateEvent.popularityScore) + 12
+        const titlesShareSignificantWord = canonicalTitleWords.some(canonicalWord =>
+          candidateTitleWords.includes(canonicalWord)
         );
 
-        // 2. Merge ticketingOptions
-        for (const newOption of candidateEvent.ticketingOptions) {
-          if (!canonicalEvent.ticketingOptions.some(opt => opt.url === newOption.url)) {
-            canonicalEvent.ticketingOptions.push(newOption);
+        const canonicalStartTime = new Date(canonicalEvent.datetimeLocal).getTime();
+        const candidateStartTime = new Date(candidateEvent.datetimeLocal).getTime();
+        const timeDifference = Math.abs(canonicalStartTime - candidateStartTime) / (1000 * 60 * 60); // Difference in hours
+
+        const sameVenueOnSameDay = (
+          canonicalEvent.venueName === candidateEvent.venueName &&
+          canonicalEvent.datetimeLocal.split('T')[0] === candidateEvent.datetimeLocal.split('T')[0]
+        );
+
+        const isCrossProvider =
+          (canonicalEvent.source === 'ticketmaster' && candidateEvent.source === 'seatgeek') ||
+          (canonicalEvent.source === 'seatgeek' && candidateEvent.source === 'ticketmaster');
+
+        if (isCrossProvider && (titlesShareSignificantWord || (timeDifference <= 2 && sameVenueOnSameDay))) {
+          // Merge logic
+          // 1. Set source to 'mixed'
+          canonicalEvent.source = 'mixed';
+          if (candidateEvent.rawTicketmasterPayload) {
+            canonicalEvent.rawTicketmasterPayload = candidateEvent.rawTicketmasterPayload;
           }
-        }
+          if (candidateEvent.rawSeatGeekPayload) {
+            canonicalEvent.rawSeatGeekPayload = candidateEvent.rawSeatGeekPayload;
+          }
+          // Boost popularity score when an event is cross-listed on both primary & resale platforms
+          canonicalEvent.popularityScore = Math.min(
+            99,
+            Math.max(canonicalEvent.popularityScore, candidateEvent.popularityScore) + 12
+          );
 
-        // 3. Prefer 'family' taxonomy
-        if (candidateEvent.taxonomy === 'family' && canonicalEvent.taxonomy !== 'family') {
-          canonicalEvent.taxonomy = 'family';
-        }
+          // 2. Merge ticketingOptions
+          for (const newOption of candidateEvent.ticketingOptions) {
+            if (!canonicalEvent.ticketingOptions.some(opt => opt.url === newOption.url)) {
+              canonicalEvent.ticketingOptions.push(newOption);
+            }
+          }
 
-        // 4. Prefer incoming imageUrl if existing is fallback or missing
-        const isFallbackImage = (url: string) => url.includes('fallback') || url === ''; // Assuming 'fallback' in URL or empty string indicates a fallback
-        if ((isFallbackImage(canonicalEvent.imageUrl) || !canonicalEvent.imageUrl) && candidateEvent.imageUrl) {
-          canonicalEvent.imageUrl = candidateEvent.imageUrl;
-          canonicalEvent.imageAttribution = candidateEvent.imageAttribution;
+          // 3. Prefer 'family' taxonomy
+          if (candidateEvent.taxonomy === 'family' && canonicalEvent.taxonomy !== 'family') {
+            canonicalEvent.taxonomy = 'family';
+          }
+
+          // 4. Prefer incoming imageUrl if existing is fallback or missing
+          const isFallbackImage = (url: string) => url.includes('fallback') || url === ''; // Assuming 'fallback' in URL or empty string indicates a fallback
+          if ((isFallbackImage(canonicalEvent.imageUrl) || !canonicalEvent.imageUrl) && candidateEvent.imageUrl) {
+            canonicalEvent.imageUrl = candidateEvent.imageUrl;
+            canonicalEvent.imageAttribution = candidateEvent.imageAttribution;
+          }
+
+          merged = true;
+          break;
         }
       }
+
+      if (!merged) {
+        finalGroupEvents.push({ ...candidateEvent });
+      }
     }
-    deduplicatedEvents.set(canonicalEvent.id.toString(), canonicalEvent); // Use event ID as key for final map
+
+    for (const ev of finalGroupEvents) {
+      deduplicatedEvents.set(ev.id.toString(), ev);
+    }
   }
 
   return Array.from(deduplicatedEvents.values());

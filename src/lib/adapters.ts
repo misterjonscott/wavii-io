@@ -348,7 +348,7 @@ export function normalizeSeatGeekEvents(
       estimatedPrice,
       distanceMiles: calculateDistanceMiles(originLat, originLon, lat, lon),
       popularityScore,
-      isHotThree: idx < 3,
+      rawSeatGeekPayload: raw,
     };
   });
 }

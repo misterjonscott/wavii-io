@@ -108,6 +108,15 @@ export function EventDataTable() {
   return (
     <TooltipProvider delayDuration={150}>
       <div className="h-110 flex flex-col bg-surface-card/40">
+        {/* Table Header Bar with Legend */}
+        <div className="flex items-center justify-end px-4 py-2 border-b border-border-muted/80 bg-surface-dark/60">
+          <div className="hidden sm:flex items-center gap-3 text-[11px] text-slate-400 font-sans">
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-blue-500"></span> TM</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-orange-500"></span> SG</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse"></span> Mixed</span>
+          </div>
+        </div>
+
         {/* Scrollable Table Viewport with Sticky Header */}
         <div
           ref={scrollContainerRef}
@@ -231,8 +240,26 @@ export function EventDataTable() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="truncate font-semibold text-slate-100">
-                              {event.title}
+                            <div className="flex items-center gap-2">
+                              <span
+                                title={
+                                  event.source === 'mixed'
+                                    ? 'Dual-Market Merged Collision (TM + SG)'
+                                    : event.source === 'seatgeek'
+                                    ? 'SeatGeek v2 API (Resale)'
+                                    : 'Ticketmaster Discovery v2 (Primary)'
+                                }
+                                className={`inline-block h-2 w-2 rounded-full shrink-0 cursor-help ${
+                                  event.source === 'mixed'
+                                    ? 'bg-purple-500 animate-pulse shadow-sm shadow-purple-500/50'
+                                    : event.source === 'seatgeek'
+                                    ? 'bg-orange-500'
+                                    : 'bg-blue-500'
+                                }`}
+                              />
+                              <div className="truncate font-semibold text-slate-100">
+                                {event.title}
+                              </div>
                             </div>
                             <div className="md:hidden truncate text-[11px] text-slate-400">
                               {event.venueName}

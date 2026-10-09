@@ -6,6 +6,16 @@ import { mergeEvents } from '@/lib/deduplicator';
 import { SeatGeekRawEvent, WaviiEvent, TicketmasterRawEvent } from '@/types/wavii';
 
 export async function GET(request: NextRequest) {
+  let ticketmasterHttpStatus: number | null = null;
+  let seatGeekHttpStatus: number | null = null;
+  let ticketmasterErrorCount = 0;
+  let seatGeekErrorCount = 0;
+  let ticketmasterSuccessCount = 0;
+  let seatGeekSuccessCount = 0;
+  let totalRawTicketmasterItems = 0;
+  let totalRawSeatGeekItems = 0;
+  let rawSeatGeekPayload: unknown = {};
+  let rawTicketmasterPayload: unknown = {};
   const searchParams = request.nextUrl.searchParams;
   const latParam = searchParams.get('lat');
   const lonParam = searchParams.get('lon');
@@ -31,12 +41,32 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('sort', 'score.desc');
     url.searchParams.set('client_id', seatGeekClientId.trim());
 
-    const res = await fetch(url.toString(), { cache: 'no-store' });
-    if (!res.ok) {
-      throw new Error(`SeatGeek API responded with status ${res.status}`);
+    try {
+      const res = await fetch(url.toString(), { cache: 'no-store' });
+      seatGeekHttpStatus = res.status;
+      if (!res.ok) {
+        seatGeekErrorCount++;
+        throw new Error(`SeatGeek API responded with status ${res.status}`);
+      } else {
+        seatGeekSuccessCount++;
+      }
+      const text = await res.text();
+      let data: { events?: SeatGeekRawEvent[] } = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+        rawSeatGeekPayload = data;
+      } catch (parseError) {
+        console.error('Failed to parse SeatGeek JSON:', parseError);
+        console.log('Raw text:', text);
+        rawSeatGeekPayload = { parseError: true, text };
+      }
+      totalRawSeatGeekItems = data.events?.length || 0;
+      return normalizeSeatGeekEvents(data.events || [], lat, lon);
+    } catch (err) {
+      console.error('SeatGeek Fetch Exception:', err);
+      rawSeatGeekPayload = { error: err instanceof Error ? err.message : 'Unknown error' };
+      throw err;
     }
-    const data = (await res.json()) as { events?: SeatGeekRawEvent[] };
-    return normalizeSeatGeekEvents(data.events || [], lat, lon);
   })();
 
   const ticketmasterPromise = (async () => {
@@ -68,12 +98,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const res = await fetch(url.toString(), { cache: 'no-store' });
-    if (!res.ok) {
-      throw new Error(`Ticketmaster API responded with status ${res.status}`);
+    try {
+      const res = await fetch(url.toString(), { cache: 'no-store' });
+      ticketmasterHttpStatus = res.status;
+      if (!res.ok) {
+        ticketmasterErrorCount++;
+        throw new Error(`Ticketmaster API responded with status ${res.status}`);
+      } else {
+        ticketmasterSuccessCount++;
+      }
+      const data = (await res.json()) as { _embedded?: { events?: TicketmasterRawEvent[] } };
+      rawTicketmasterPayload = data;
+      totalRawTicketmasterItems = data._embedded?.events?.length || 0;
+      return normalizeTicketmasterEvents(data._embedded?.events || []);
+    } catch (err) {
+      console.error('Ticketmaster Fetch Exception:', err);
+      rawTicketmasterPayload = { error: err instanceof Error ? err.message : 'Unknown error' };
+      throw err;
     }
-    const data = (await res.json()) as { _embedded?: { events?: TicketmasterRawEvent[] } };
-    return normalizeTicketmasterEvents(data._embedded?.events || []);
   })();
 
   const [seatGeekResult, ticketmasterResult] = await Promise.allSettled([
@@ -114,5 +156,17 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     source: allEvents.length > 0 ? 'mixed' : 'mock',
     events: deduplicatedEvents,
+    metadata: {
+      totalRawTicketmasterItems,
+      totalRawSeatGeekItems,
+      ticketmasterHttpStatus,
+      seatGeekHttpStatus,
+      ticketmasterErrorCount,
+      seatGeekErrorCount,
+      ticketmasterSuccessCount,
+      seatGeekSuccessCount,
+      rawSeatGeekPayload,
+      rawTicketmasterPayload,
+    },
   });
 }

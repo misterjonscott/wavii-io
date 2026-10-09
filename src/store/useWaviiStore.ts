@@ -25,6 +25,16 @@ interface WaviiState {
   originLon: number;
   detectedCity: string;
 
+  // API Response Metadata
+  totalRawTicketmasterItems: number;
+  totalRawSeatGeekItems: number;
+  ticketmasterHttpStatus: number | null;
+  seatGeekHttpStatus: number | null;
+  ticketmasterErrorCount: number;
+  seatGeekErrorCount: number;
+  ticketmasterSuccessCount: number;
+  seatGeekSuccessCount: number;
+
   // Navigation & Saved State
   activeNavTab: NavTab;
   savedEventIds: number[];
@@ -89,6 +99,15 @@ interface WaviiState {
   setSelectedParking: (place: any | null) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setSelectedDining: (place: any | null) => void;
+
+  setTotalRawTicketmasterItems: (count: number) => void;
+  setTotalRawSeatGeekItems: (count: number) => void;
+  setTicketmasterHttpStatus: (status: number | null) => void;
+  setSeatGeekHttpStatus: (status: number | null) => void;
+  setTicketmasterErrorCount: (count: number) => void;
+  setSeatGeekErrorCount: (count: number) => void;
+  setTicketmasterSuccessCount: (count: number) => void;
+  setSeatGeekSuccessCount: (count: number) => void;
 }
 
 export const BLANK_WEATHER_DENSITY: DailyWeatherAndDensity[] = [
@@ -112,6 +131,16 @@ export const useWaviiStore = create<WaviiState>()(
       originLat: 39.7684,
       originLon: -86.1581,
       detectedCity: 'Indianapolis, IN',
+
+      // API Response Metadata
+      totalRawTicketmasterItems: 0,
+      totalRawSeatGeekItems: 0,
+      ticketmasterHttpStatus: null,
+      seatGeekHttpStatus: null,
+      ticketmasterErrorCount: 0,
+      seatGeekErrorCount: 0,
+      ticketmasterSuccessCount: 0,
+      seatGeekSuccessCount: 0,
 
       activeNavTab: 'explore',
       savedEventIds: [],
@@ -283,6 +312,15 @@ export const useWaviiStore = create<WaviiState>()(
           sortField: 'date',
           sortOrder: 'asc',
         }),
+
+      setTotalRawTicketmasterItems: (count: number) => set({ totalRawTicketmasterItems: count }),
+      setTotalRawSeatGeekItems: (count: number) => set({ totalRawSeatGeekItems: count }),
+      setTicketmasterHttpStatus: (status: number | null) => set({ ticketmasterHttpStatus: status }),
+      setSeatGeekHttpStatus: (status: number | null) => set({ seatGeekHttpStatus: status }),
+      setTicketmasterErrorCount: (count: number) => set({ ticketmasterErrorCount: count }),
+      setSeatGeekErrorCount: (count: number) => set({ seatGeekErrorCount: count }),
+      setTicketmasterSuccessCount: (count: number) => set({ ticketmasterSuccessCount: count }),
+      setSeatGeekSuccessCount: (count: number) => set({ seatGeekSuccessCount: count }),
 
       hydrateLiveData: async () => {
         if (get().isHydrating) return;

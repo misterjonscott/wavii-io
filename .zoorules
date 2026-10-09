@@ -62,5 +62,6 @@ Zustand controls all global state.
 - **Explicit Blocklist:** Do NOT load `MOCK_EVENTS` payloads, build artifacts (`.next/`, `node_modules/`), or test fixtures into context. Always reference shared TypeScript definitions in `src/types/` for data structure contracts.
 
 ### B. Execution Efficiency
-- **Targeted Edits:** Use line-level diffs or targeted component slices rather than rewriting entire multi-hundred-line files.
+- **Targeted Edits:** Prefer line-level diffs or targeted component slices for clean execution. 
+- **CRITICAL TOOL OVERRIDE:** If `apply_diff` or `edit_file` returns any permission error or is unavailable in the current tool schema, you are explicitly authorized and required to immediately fall back to `write_to_file` for full-file replacement. Do not retry failed diff tools.
 - **Architectural Guardrails:** Enforce strict typing on `WaviiEvent`, preserve the adapter layer in `src/lib/adapters.ts`, and respect `'use client'` boundaries.

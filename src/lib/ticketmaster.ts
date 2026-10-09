@@ -205,7 +205,7 @@ export function normalizeTicketmasterEvents(
       estimatedPrice,
       distanceMiles: 0, // Will be calculated dynamically in the UI
       popularityScore,
-      isHotThree: false, // This is specific to SeatGeek or a UI logic
+      rawTicketmasterPayload: raw,
     };
   });
 }

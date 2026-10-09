@@ -66,7 +66,7 @@ export interface TicketmasterRawEvent {
   url: string;
   dates: {
     start: {
-      dateTime: string;
+      dateTime?: string;
     };
   };
   _embedded? : {
@@ -169,6 +169,8 @@ export interface WaviiEvent {
   distanceMiles: number;  // Calculated relative to search center (default: Indianapolis)
   popularityScore: number;
   isHotThree?: boolean;
+  rawTicketmasterPayload?: TicketmasterRawEvent;
+  rawSeatGeekPayload?: SeatGeekRawEvent;
 }
 
 export interface DailyWeatherAndDensity {
