@@ -16,7 +16,6 @@ import { TAXONOMY_STYLES } from '@/data/mockData';
 import { getEnvironmentalTags } from '@/lib/adapters';
 import { Button } from '@/components/ui/button';
 import { EventMap } from '@/components/wavii/EventMap';
-import { EventActionBar } from '@/components/wavii/EventActionBar';
 import { EventLogistics } from '@/components/wavii/EventLogistics';
 
 // This helper function is now exclusively used within EventDetail.tsx, so it remains here.
@@ -397,29 +396,6 @@ export function EventDetail() {
           selectedDining={selectedDining}
           setSelectedParking={setSelectedParking}
           setSelectedDining={setSelectedDining}
-        />
-      )}
-
-      {(selectedParking || selectedDining) && plannedEvent && (
-        <EventActionBar
-          activeEvent={plannedEvent}
-          selectedParking={selectedParking}
-          selectedDining={selectedDining}
-          onRemoveParking={() => setSelectedParking(null)}
-          onRemoveDining={() => setSelectedDining(null)}
-          onClearItinerary={() => clearItinerary()}
-          onSelectEvent={() => {
-            if (selectedEventId !== plannedEvent.id) {
-              setSelectedEventId(plannedEvent.id);
-            }
-          }}
-          onSelectTab={(tab) => {
-            if (selectedEventId !== plannedEvent.id) {
-              setSelectedEventId(plannedEvent.id);
-            }
-            setPlannerOpen(true);
-            setPlannerTab(tab);
-          }}
         />
       )}
     </div>

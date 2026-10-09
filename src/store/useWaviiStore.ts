@@ -201,7 +201,6 @@ export const useWaviiStore = create<WaviiState>()(
           ...(selectedEventId !== state.selectedEventId
             ? { placesData: { parking: [], dining: [] } }
             : {}),
-          ...(selectedEventId === null ? { isPlannerOpen: false } : {}),
         })),
 
       setIsPlannerOpen: (isPlannerOpen) => set({ isPlannerOpen }),
@@ -257,6 +256,7 @@ export const useWaviiStore = create<WaviiState>()(
           selectedParking: null,
           selectedDining: null,
           plannedEventId: null,
+          isPlannerOpen: false,
         }),
 
       setSorting: (field) =>

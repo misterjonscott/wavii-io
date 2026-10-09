@@ -16,6 +16,7 @@ import { TokenizedFilterBar } from '@/components/wavii/TokenizedFilterBar';
 import { DeveloperConsole } from '@/components/wavii/DeveloperConsole';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { EventActionBar } from '@/components/wavii/EventActionBar';
 import {
   Select,
   SelectContent,
@@ -81,6 +82,21 @@ export default function WaviiDashboard() {
     { id: 'explore', label: 'Explore' },
     { id: 'saved', label: 'Saved', badge: savedEventIds.length },
   ];
+
+  const {
+    events,
+    plannedEventId,
+    selectedParking,
+    selectedDining,
+    setSelectedParking,
+    setSelectedDining,
+    clearItinerary,
+    setSelectedEventId,
+    setPlannerOpen,
+    setPlannerTab,
+  } = useWaviiStore();
+
+  const plannedEvent = events.find((e) => e.id === plannedEventId);
 
   return (
     <TooltipProvider delayDuration={120}>
@@ -317,6 +333,23 @@ export default function WaviiDashboard() {
           )}
         </main>
       </div>
+      {/* Persistent Itinerary Summary Bar */}
+      {(selectedParking || selectedDining) && plannedEvent && (
+        <EventActionBar
+          activeEvent={plannedEvent}
+          selectedParking={selectedParking}
+          selectedDining={selectedDining}
+          onRemoveParking={() => setSelectedParking(null)}
+          onRemoveDining={() => setSelectedDining(null)}
+          onClearItinerary={() => clearItinerary()}
+          onSelectEvent={() => setSelectedEventId(plannedEvent.id)}
+          onSelectTab={(tab) => {
+            setSelectedEventId(plannedEvent.id);
+            setPlannerOpen(true);
+            setPlannerTab(tab);
+          }}
+        />
+      )}
     </TooltipProvider>
   );
 }
